@@ -19,6 +19,9 @@ export default function EditContactInfoPage() {
   const [submitted, setSubmitted] = useState(false); // Tracks if submission succeeded
   const [error, setError] = useState<string | null>(null); // Stores error message for display
 
+  const [formChanged, setFormChanged] = useState(false); //for unsaved changes check
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (!loading && user) {
       loadData();
@@ -59,6 +62,8 @@ export default function EditContactInfoPage() {
 
       setSubmitting(false); // Hide spinner
       setSubmitted(true);   // Trigger visual success feedback
+      setFormChanged(false);  // Lets page know change has been saved
+      setTimeout(() => setStatusMessage(null), 1); // Removes "unsaved change" from page
     } catch (err: any) {
       console.error("Error updating contact info:", err);
       setError("Something went wrong. Please try again."); // Show error feedback
@@ -66,7 +71,55 @@ export default function EditContactInfoPage() {
     }
   }
 
-  // Reset success and error states when user edits any field
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (formChanged) {
+        event.preventDefault();
+        event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+      }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
+
+
+  // Reset success and error states when user edits any field, also sets a change message
   function handleInputChange(
     setter: React.Dispatch<React.SetStateAction<string>>
   ) {
@@ -74,6 +127,8 @@ export default function EditContactInfoPage() {
       setter(e.target.value);
       if (submitted) setSubmitted(false); // Hide success message if editing again
       if (error) setError(null);          // Clear error message on user change
+      setFormChanged(true);               // Shows that form is changed
+      setStatusMessage("There has been a change. Don't forget to save!"); // Visual affirmation of change
     };
   }
 
@@ -121,7 +176,7 @@ export default function EditContactInfoPage() {
         placeholder="Enter your location here"
         className="border p-2 rounded w-full"
       />
-
+      {statusMessage == "There has been a change. Don't forget to save!" && <p className="mt-2 text-sm text-yellow-400">{statusMessage}</p>}
       {/* SUBMIT BUTTON with dynamic styles for submitting and submitted states */}
       <button
         type="submit"
