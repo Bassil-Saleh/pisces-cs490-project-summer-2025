@@ -478,7 +478,7 @@ export default function ViewPastUploadsPage() {
     if (!loading && user) {
       (async () => {
         try {
-          const listRef = ref(storage, `users/${user.uid}`);
+          const listRef = ref(storage, `users/${user.uid}/uploads`);
           const result = await list(listRef, { maxResults: 10 });
           setFileRefs(result.items);
         } catch (error) {
