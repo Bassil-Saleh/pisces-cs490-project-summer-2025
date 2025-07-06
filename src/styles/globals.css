@@ -327,3 +327,114 @@
 .purple .border-gray-200 {
   border-color: #c4b5fd;
 }
+
+/* Purple theme support for advice generation page */
+.purple .advice-card {
+  background-color: #faf5ff;
+  border-color: #c4b5fd;
+  color: #581c87;
+}
+
+.purple .advice-card-header {
+  background-color: #f3f4f6;
+  border-color: #c4b5fd;
+}
+
+.purple .advice-job-card {
+  background-color: #ffffff;
+  border-color: #c4b5fd;
+}
+
+.purple .advice-job-card:hover {
+  border-color: #a78bfa;
+}
+
+.purple .advice-job-card.selected {
+  background-color: #f3f4f6;
+  border-color: #8b5cf6;
+}
+
+.purple .advice-resume-card {
+  background-color: #ffffff;
+  border-color: #c4b5fd;
+}
+
+.purple .advice-resume-card:hover {
+  border-color: #a78bfa;
+}
+
+.purple .advice-resume-card.selected {
+  background-color: #f3f4f6;
+  border-color: #8b5cf6;
+}
+
+.purple .advice-button {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.purple .advice-button:hover {
+  background-color: #7c3aed;
+}
+
+.purple .advice-button:disabled {
+  background-color: #d1d5db;
+  color: #6b7280;
+}
+
+.purple .advice-status-error {
+  background-color: #fef2f2;
+  border-color: #f87171;
+  color: #dc2626;
+}
+
+.purple .advice-status-success {
+  background-color: #f0fdf4;
+  border-color: #34d399;
+  color: #059669;
+}
+
+.purple .advice-display {
+  background-color: #faf5ff;
+  border-color: #c4b5fd;
+  color: #581c87;
+}
+
+.purple .advice-display-header {
+  background-color: #f3f4f6;
+  border-color: #c4b5fd;
+}
+
+/* Purple theme support for side panel */
+.purple .side-panel {
+  background-color: #faf5ff;
+  border-color: #c4b5fd;
+  color: #581c87;
+}
+
+.purple .side-panel-nav-item {
+  color: #581c87;
+}
+
+.purple .side-panel-nav-item:hover {
+  background-color: #f3f4f6;
+  color: #6b21a8;
+}
+
+.purple .side-panel-nav-item.active {
+  background-color: #ddd6fe;
+  color: #6b21a8;
+  border-color: #8b5cf6;
+}
+
+.purple .side-panel-nav-section-title {
+  color: #7c3aed;
+}
+
+.purple .side-panel-brand {
+  color: #581c87;
+}
+
+.purple .side-panel-subtitle {
+  color: #7c3aed;
+}
