@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { userProfile } from "@/components/objects/userProfile";
 
-type ThemeType = "system" | "light" | "dark";
+type ThemeType = "system" | "light" | "dark" | "purple";
 
 interface ThemeContextProps {
     theme: ThemeType;
@@ -74,15 +74,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         const applyTheme = (selectedTheme: ThemeType) => {
             if (selectedTheme === "light") {
-                root.classList.remove("dark");
+                root.classList.remove("dark", "purple");
             } else if (selectedTheme === "dark") {
                 root.classList.add("dark");
+                root.classList.remove("purple");
+            } else if (selectedTheme === "purple") {
+                root.classList.add("purple");
+                root.classList.remove("dark");
             } else if (selectedTheme === "system") {
                 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
                 if (prefersDark) {
                     root.classList.add("dark");
+                    root.classList.remove("purple");
                 } else {
-                    root.classList.remove("dark");
+                    root.classList.remove("dark", "purple");
                 }
             }
         };
