@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing userId or file parameter" }, { status: 400 });
         }
 
-        const filePath = `users/${userId}/${fileName}`;
+        const filePath = `users/${userId}/uploads/${fileName}`;
         const file = bucket.file(filePath);
 
         const [exists] = await file.exists();

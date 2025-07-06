@@ -67,7 +67,7 @@ export default function UploadResumePage() {
     if (!files || files.length === 0 || !user) return;
 
     const file = files[0];
-    const filePath = `users/${user.uid}/${file.name}`;
+    const filePath = `users/${user.uid}/uploads/${file.name}`;
     const fileRef = ref(storage, filePath);
     const uploadTask = uploadBytesResumable(fileRef, file);
 
