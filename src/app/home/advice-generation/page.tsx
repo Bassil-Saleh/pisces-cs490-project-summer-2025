@@ -87,7 +87,7 @@ export default function AdviceGenerationPage() {
         if (!user) return;
         
         try {
-            const listRef = ref(storage, `users/${user.uid}`);
+            const listRef = ref(storage, `users/${user.uid}/uploads`);
             const result = await list(listRef, { maxResults: 50 });
             
             // Filter for resume-like files (common resume file types)
