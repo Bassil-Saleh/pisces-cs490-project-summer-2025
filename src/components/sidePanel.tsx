@@ -15,6 +15,7 @@ import {
     Settings,
     FileText,
     Building,
+    Lightbulb,
 } from "lucide-react";
 
 interface SidePanelProps {
@@ -47,6 +48,7 @@ const navigationSections: NavSection[] = [
             { href: "/home/upload-job-ad", label: "Upload Job Ad", icon: Briefcase },
             { href: "/home/view-job-ad", label: "View Job Ads", icon: Eye },
             { href: "/home/view-past-uploads", label: "Past Uploads", icon: Clock },
+            { href: "/home/advice-generation", label: "Career Advice", icon: Lightbulb },
         ],
     },
     {
@@ -67,17 +69,17 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
 
     return (
         <aside
-            className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg transform transition-all duration-300 ease-in-out ${
+            className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg transform transition-all duration-300 ease-in-out side-panel ${
                 isSidePanelOpen ? "translate-x-0 w-64" : "-translate-x-full w-0"
             } flex-shrink-0 overflow-hidden min-h-full`}
         >
             <div className="p-6 h-full flex flex-col w-64 overflow-y-auto">
                 {/* Logo/Brand Section */}
                 <div className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white side-panel-brand">
                         Resume Builder
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 side-panel-subtitle">
                         Your career companion
                     </p>
                 </div>
@@ -86,7 +88,7 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                 <nav className="space-y-6 flex-1">
                     {navigationSections.map((section, sectionIndex) => (
                         <div key={sectionIndex}>
-                            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                            <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 side-panel-nav-section-title">
                                 {section.title}
                             </h3>
                             <ul className="space-y-1">
@@ -98,9 +100,9 @@ export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
                                         <li key={itemIndex}>
                                             <Link
                                                 href={item.href}
-                                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group side-panel-nav-item ${
                                                     isActive
-                                                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-r-2 border-blue-700 dark:border-blue-400"
+                                                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-r-2 border-blue-700 dark:border-blue-400 active"
                                                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white"
                                                 }`}
                                             >
