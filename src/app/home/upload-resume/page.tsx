@@ -326,14 +326,14 @@ export default function UploadResumePage() {
     file: { [key: string]: any },
     options: ItemTemplateOptions
   ) => (
-    <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-stone-800 mt-2">
+    <div className="flex items-center justify-between p-3 border rounded-md w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mt-2 upload-item-container">
       <div className="flex items-center gap-3">
-        <i className="pi pi-file" style={{ fontSize: "1.5rem" }}></i>
+        <i className="pi pi-file text-gray-600 dark:text-gray-400 purple:text-purple-600" style={{ fontSize: "1.5rem" }}></i>
         <div className="flex flex-col">
-          <span className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-xs">
+          <span className="font-medium text-gray-800 dark:text-gray-100 purple:text-purple-900 truncate max-w-xs">
             {file.name}
           </span>
-          <small className="text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString()}</small>
+          <small className="text-gray-500 dark:text-gray-400 purple:text-purple-600">{new Date().toLocaleDateString()}</small>
         </div>
       </div>
       <div className="flex gap-2">
@@ -359,7 +359,7 @@ export default function UploadResumePage() {
   );
 
   return (
-    <div className="p-4">
+    <div className="p-4 min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 upload-page-container">
       <FileUpload
         ref={fileUploadRef}
         name="file"
@@ -374,15 +374,15 @@ export default function UploadResumePage() {
       />
 
       {isUploading && (
-        <div className="mt-4 relative w-full bg-gray-300 rounded-md h-6 overflow-hidden">
-          {/* Blue progress fill */}
+        <div className="mt-4 relative w-full bg-gray-200 dark:bg-gray-700 purple:bg-purple-200 rounded-md h-6 overflow-hidden">
+          {/* Progress fill */}
           <div
-            className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-300 ease-in-out"
+            className="absolute top-0 left-0 h-full bg-blue-600 dark:bg-blue-500 purple:bg-purple-600 transition-all duration-300 ease-in-out"
             style={{ width: `${uploadProgress}%` }}
           ></div>
 
           {/* Centered text inside progress bar */}
-          <div className="absolute inset-0 flex items-center justify-center text-white font-medium text-sm">
+          <div className="absolute inset-0 flex items-center justify-center text-gray-800 dark:text-white purple:text-purple-900 font-medium text-sm">
             {uploadProgress < 80
               ? `Uploading... ${uploadProgress}%`
               : uploadProgress < 100
@@ -413,17 +413,17 @@ export default function UploadResumePage() {
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto">
+      <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100 max-h-96 overflow-y-auto upload-preview-container">
         <h3 className="font-semibold mb-2">DOCX Preview:</h3>
         <div className="docx-preview-reset">
           <div
           ref={docxContainerRef}
-          className="prose max-w-none"></div>
+          className="prose max-w-none dark:prose-invert purple:prose-purple"></div>
         </div>
       </div>
 
       {extractedText && (
-        <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm text-black max-h-96 overflow-y-auto whitespace-pre-wrap">
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100 max-h-96 overflow-y-auto whitespace-pre-wrap upload-preview-container">
           <h3 className="font-semibold mb-2">Extracted Text:</h3>
           {extractedText}
         </div>

@@ -8,18 +8,24 @@ const config: Config = {
         extend: {
             colors: {
                 background: {
-                    DEFAULT: "#f3f4f6", // Light mode background (gray-100)
-                    dark: "#111827", // Dark mode background (gray-900)
+                    DEFAULT: "#f8fafc", // Modern Light theme background
+                    dark: "#0f172a", // Modern Dark theme background
+                    purple: "#faf5ff", // Purple theme background
                 },
                 foreground: {
-                    DEFAULT: "#111827", // Light mode text (gray-900)
-                    dark: "#f3f4f6", // Dark mode text (gray-100)
+                    DEFAULT: "#1e293b", // Modern Light theme text
+                    dark: "#f1f5f9", // Modern Dark theme text
+                    purple: "#581c87", // Purple theme text
                 },
             },
         },
     },
-    darkMode: "class", // Enable dark mode using the "class" strategy
-    plugins: [],
+    darkMode: ["class", '[data-mode="dark"]'], // Enable dark mode using the "class" strategy
+    plugins: [
+        function({ addVariant }: { addVariant: (name: string, selector: string) => void }) {
+            addVariant('purple', '.purple &')
+        }
+    ],
 };
 
 export default config;

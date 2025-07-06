@@ -48,71 +48,108 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
-  --foreground: #0c0a09;
+  /* Updated Modern Light Theme - Clean Blue/White */
+  --background: #f8fafc;
+  --foreground: #1e293b;
   --card: #ffffff;
-  --card-foreground: #0c0a09;
+  --card-foreground: #1e293b;
   --popover: #ffffff;
-  --popover-foreground: #0c0a09;
-  --primary: #1c1917;
-  --primary-foreground: #fafaf9;
-  --secondary: #f5f5f4;
-  --secondary-foreground: #1c1917;
-  --muted: #f5f5f4;
-  --muted-foreground: #79716b;
-  --accent: #f5f5f4;
-  --accent-foreground: #1c1917;
-  --destructive: #e7000b;
-  --border: #e7e5e4;
-  --input: #e7e5e4;
-  --ring: #a6a09b;
-  --chart-1: #f54a00;
-  --chart-2: #009689;
-  --chart-3: #104e64;
-  --chart-4: #ffba00;
-  --chart-5: #fd9a00;
-  --sidebar: #fafaf9;
-  --sidebar-foreground: #0c0a09;
-  --sidebar-primary: #1c1917;
-  --sidebar-primary-foreground: #fafaf9;
-  --sidebar-accent: #f5f5f4;
-  --sidebar-accent-foreground: #1c1917;
-  --sidebar-border: #e7e5e4;
-  --sidebar-ring: #a6a09b;
+  --popover-foreground: #1e293b;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #dbeafe;
+  --accent-foreground: #1e40af;
+  --destructive: #ef4444;
+  --border: #cbd5e1;
+  --input: #f1f5f9;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #1e293b;
+  --sidebar-border: #cbd5e1;
+  --sidebar-ring: #3b82f6;
 }
 
 .dark {
-  --background: #0c0a09;
-  --foreground: #fafaf9;
-  --card: #1c1917;
-  --card-foreground: #fafaf9;
-  --popover: #1c1917;
-  --popover-foreground: #fafaf9;
-  --primary: #e7e5e4;
-  --primary-foreground: #1c1917;
-  --secondary: #292524;
-  --secondary-foreground: #fafaf9;
-  --muted: #292524;
-  --muted-foreground: #a6a09b;
-  --accent: #292524;
-  --accent-foreground: #fafaf9;
-  --destructive: #ff6467;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #79716b;
-  --chart-1: #1447e6;
-  --chart-2: #00bc7d;
-  --chart-3: #fd9a00;
-  --chart-4: #ad46ff;
-  --chart-5: #ff2056;
-  --sidebar: #1c1917;
-  --sidebar-foreground: #fafaf9;
-  --sidebar-primary: #1447e6;
-  --sidebar-primary-foreground: #fafaf9;
-  --sidebar-accent: #292524;
-  --sidebar-accent-foreground: #fafaf9;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #79716b;
+  /* Updated Modern Dark Theme - Deep Navy/Blue */
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --popover: #1e293b;
+  --popover-foreground: #f1f5f9;
+  --primary: #60a5fa;
+  --primary-foreground: #0f172a;
+  --secondary: #334155;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e40af;
+  --accent-foreground: #f1f5f9;
+  --destructive: #f87171;
+  --border: #334155;
+  --input: #334155;
+  --ring: #60a5fa;
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #f87171;
+  --chart-5: #a78bfa;
+  --sidebar: #1e293b;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #60a5fa;
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #334155;
+  --sidebar-ring: #60a5fa;
+}
+
+.purple {
+  /* New Purple Theme - Modern Purple/Violet */
+  --background: #faf5ff;
+  --foreground: #581c87;
+  --card: #ffffff;
+  --card-foreground: #581c87;
+  --popover: #ffffff;
+  --popover-foreground: #581c87;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: #ede9fe;
+  --secondary-foreground: #581c87;
+  --muted: #f3f4f6;
+  --muted-foreground: #7c3aed;
+  --accent: #ddd6fe;
+  --accent-foreground: #6b21a8;
+  --destructive: #ef4444;
+  --border: #c4b5fd;
+  --input: #f3f4f6;
+  --ring: #8b5cf6;
+  --chart-1: #8b5cf6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #3b82f6;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #581c87;
+  --sidebar-primary: #8b5cf6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #581c87;
+  --sidebar-border: #c4b5fd;
+  --sidebar-ring: #8b5cf6;
 }
 
 .docx-preview-reset {
@@ -161,4 +198,132 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* PrimeReact FileUpload component theme overrides */
+.p-fileupload {
+  @apply bg-white dark:bg-gray-800;
+  @apply border border-gray-200 dark:border-gray-700;
+  @apply rounded-lg;
+}
+
+.purple .p-fileupload {
+  background-color: #faf5ff;
+  border-color: #c4b5fd;
+}
+
+.p-fileupload-content {
+  @apply bg-white dark:bg-gray-800;
+  @apply border-0;
+}
+
+.purple .p-fileupload-content {
+  background-color: #faf5ff;
+}
+
+.p-fileupload-empty {
+  @apply bg-white dark:bg-gray-800;
+  @apply text-gray-500 dark:text-gray-400;
+  @apply border-2 border-dashed border-gray-300 dark:border-gray-600;
+  @apply rounded-lg;
+  @apply p-8;
+}
+
+.purple .p-fileupload-empty {
+  background-color: #faf5ff;
+  color: #7c3aed;
+  border-color: #c4b5fd;
+}
+
+.p-fileupload-choose {
+  @apply bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600;
+  @apply text-white;
+  @apply border-0;
+}
+
+.purple .p-fileupload-choose {
+  background-color: #8b5cf6;
+}
+
+.purple .p-fileupload-choose:hover {
+  background-color: #7c3aed;
+}
+
+.p-fileupload-upload {
+  @apply bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600;
+  @apply text-white;
+  @apply border-0;
+}
+
+.purple .p-fileupload-upload {
+  background-color: #8b5cf6;
+}
+
+.purple .p-fileupload-upload:hover {
+  background-color: #7c3aed;
+}
+
+.p-fileupload-cancel {
+  @apply bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600;
+  @apply text-white;
+  @apply border-0;
+}
+
+.purple .p-fileupload-cancel {
+  background-color: #ef4444;
+}
+
+.purple .p-fileupload-cancel:hover {
+  background-color: #dc2626;
+}
+
+/* Fix for progress bar in dark themes */
+.dark .bg-gray-300 {
+  @apply bg-gray-600;
+}
+
+.purple .bg-gray-300 {
+  @apply bg-purple-200;
+}
+
+/* Fix for preview sections */
+.dark .bg-gray-100 {
+  @apply bg-gray-800 text-white;
+}
+
+.purple .bg-gray-100 {
+  @apply bg-purple-50 text-purple-900;
+}
+
+/* Purple theme support for upload resume page */
+.purple .upload-item-container {
+  background-color: #faf5ff;
+  border-color: #c4b5fd;
+}
+
+.purple .upload-page-container {
+  background-color: #faf5ff;
+  color: #581c87;
+}
+
+.purple .upload-preview-container {
+  background-color: #f3f4f6;
+  color: #581c87;
+}
+
+/* Additional purple theme styles */
+.purple .bg-gray-50 {
+  background-color: #f3f4f6;
+}
+
+.purple .text-gray-900 {
+  color: #581c87;
+}
+
+.purple .bg-white {
+  background-color: #faf5ff;
+}
+
+.purple .border-gray-200 {
+  border-color: #c4b5fd;
 }
