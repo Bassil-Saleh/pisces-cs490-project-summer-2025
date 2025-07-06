@@ -285,8 +285,8 @@ export default function ViewJobAdsPage() {
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
         customMetadata: {
-          "resumeID": jobAds[selectedIndex].jobID,
-          "jobID": uuidv4(),
+          "resumeID": uuidv4(),
+          "jobID": jobAds[selectedIndex].jobID,
         }
       };
 
