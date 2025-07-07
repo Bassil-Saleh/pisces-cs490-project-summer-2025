@@ -4,6 +4,8 @@ import { Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type UsedResume = {
   name: string;
@@ -12,22 +14,55 @@ type UsedResume = {
   jobID: string;
 };
 
+type JobApp = {
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
+  dateSubmitted: Timestamp;
+  jobID: string;
+  applied: boolean;
+};
+
 export default function TrackApplicationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   const [usedResumes, setUsedResumes] = useState<UsedResume[]>([]);
+  const [jobApps, setJobApps] = useState<JobApp[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
+  const [loadingApps, setLoadingApps] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
       fetchUsedResumes(user.uid);
+      fetchJobApps();
     }
     if (!loading && !user) {
       router.push("/");
     }
   }, [user, loading, router]);
+
+  async function fetchJobApps() {
+    if (!user) return;
+    try {
+      setLoadingApps(true);
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && Array.isArray(userSnap.data().jobAds)) {
+        const jobs: JobApp[] = userSnap.data().jobAds;
+        // console.log(jobs);
+        const appliedJobs = jobs.filter((ad) => ad.applied);
+        // console.log(appliedJobs);
+        setJobApps(appliedJobs);
+      }
+    } catch (error) {
+      console.log(`Error occured while fetching job applications: ${(error as Error).message || String(error)}`);
+      setError(`Error occured while fetching resumes: ${(error as Error).message || String(error)}`);
+    } finally {
+      setLoadingApps(false);
+    }
+  }
 
   async function fetchUsedResumes(userID: string) {
     if (!user) return;
@@ -39,7 +74,7 @@ export default function TrackApplicationsPage() {
       console.log(data);
       setUsedResumes(data);
     } catch (error) {
-      console.log("Error occured while fetching resumes:", error);
+      console.log(`Error occured while fetching resumes: ${(error as Error).message || String(error)}`);
       setError(`Error occured while fetching resumes: ${(error as Error).message || String(error)}`);
     } finally {
       setLoadingResumes(false);
