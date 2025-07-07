@@ -13,7 +13,7 @@ export default function TrackApplicationsPage() {
                         Track Your Job Applications
                     </h1>
                 </div>
-                <p>
+                <p className="text-gray-600 dark:text-gray-300">
                     Review job ads you've applied to and the resumes you used for them
                 </p>
             </div>
