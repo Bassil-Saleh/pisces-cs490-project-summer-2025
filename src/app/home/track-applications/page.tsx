@@ -4,7 +4,6 @@ import { Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-import { StorageReference } from "firebase/storage";
 
 type UsedResume = {
   name: string;
@@ -22,6 +21,9 @@ export default function TrackApplicationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!loading && user) {
+      fetchUsedResumes(user.uid);
+    }
     if (!loading && !user) {
       router.push("/");
     }
@@ -33,6 +35,9 @@ export default function TrackApplicationsPage() {
       setLoadingResumes(true);
       const response = await fetch(`/api/user/job-applications?userID=${encodeURIComponent(userID)}`);
       if (!response.ok) throw new Error(`Resume fetching failed: ${response.status}`);
+      const data: UsedResume[] = await response.json();
+      console.log(data);
+      setUsedResumes(data);
     } catch (error) {
       console.log("Error occured while fetching resumes:", error);
       setError(`Error occured while fetching resumes: ${(error as Error).message || String(error)}`);

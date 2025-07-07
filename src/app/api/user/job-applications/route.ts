@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         };
         return usedResume;
       }));
+      return NextResponse.json(usedResumes, { status: 200 });
   } catch (error) {
     console.error("Error retrieving used resumes: ", error);
     return NextResponse.json(
