@@ -50,6 +50,7 @@ export default function TopBanner({ toggleSidePanel }: TopBannerProps) {
         "/home/edit-education": "Education",
         "/home/edit-work-experience": "Work Experience",
         "/home/view-past-uploads": "Past Uploads",
+        "/home/track-applications": "Track Applications",
     };
 
     const pageTitle = pageTitles[pathname] || "Dashboard";

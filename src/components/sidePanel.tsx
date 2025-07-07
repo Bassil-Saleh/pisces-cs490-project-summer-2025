@@ -16,6 +16,7 @@ import {
     FileText,
     Building,
     Lightbulb,
+    Star,
 } from "lucide-react";
 
 interface SidePanelProps {
@@ -62,6 +63,12 @@ const navigationSections: NavSection[] = [
             { href: "/home/free-form", label: "Free-form Resume", icon: Edit },
         ],
     },
+    {
+        title: "Job Applications",
+        items: [
+            { href: "/home/track-applications", label: "Track Applications", icon: Star }
+        ]
+    }
 ];
 
 export default function SidePanel({ isSidePanelOpen }: SidePanelProps) {
