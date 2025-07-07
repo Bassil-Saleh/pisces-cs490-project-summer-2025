@@ -279,7 +279,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
     useEffect(() => {
         //handles reload and close tab if there are unsaved changes
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            if (dirtyJobs) {
+            if (Object.keys(dirtyJobs).length !== 0) {
                 event.preventDefault();
                 event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
             }
@@ -287,7 +287,7 @@ function WorkExpForm({ jobList, setJobList, user }: WorkExpFormProps) {
 
         //handles (most) clicks on links within the page if there are unsaved changes
         const handleClick = (event: MouseEvent) => {
-            if (!dirtyJobs) return;
+            if (Object.keys(dirtyJobs).length === 0) return; //fix this to check if obj is empty
 
             const nav = document.querySelector('nav');
             if (nav && nav.contains(event.target as Node)) {
