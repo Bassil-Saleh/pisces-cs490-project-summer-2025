@@ -51,17 +51,23 @@ type DownloadResumeButtonProps = {
 
 function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
   const [fileURL, setFileURL] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let mounted = true;
     setFileURL(null);
+    setError(null);
     (async () => {
       try {
         const url = await fetchBlobProxy(user.uid, fileName);
+        if (url === null) throw new Error("Unable to download file");
         if (mounted) setFileURL(url);
       } catch (error) {
-        if (mounted) console.error("Error setting download URL: ", error);
+        if (mounted) {
+          console.error("Error setting download URL: ", error);
+          setError("Failed to load download link.");
+        }
       }
     })();
     return () => {
@@ -70,20 +76,45 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
     }
   }, [user, fileName]);
 
+  if (error) return (
+    <Button disabled>
+      <AlertCircle className="h-4 w-4" />
+      Error loading file
+    </Button>
+  );
+
   if (fileURL) return (
     <Button
       disabled={!fileURL}
+      onClick={() => {
+        if (fileURL) {
+          const a = document.createElement('a');
+          a.href = fileURL;
+          a.download = fileName;
+          a.click();
+        }
+      }}
       className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
     >
       <Download className="h-4 w-4" />
-      <a
-        href={fileURL}
-        download={fileName}
-      >
-        Download
-      </a>
+      Download
     </Button>
   );
+
+  // if (fileURL) return (
+  //   <Button
+  //     disabled={!fileURL}
+  //     className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+  //   >
+  //     <Download className="h-4 w-4" />
+  //     <a
+  //       href={fileURL}
+  //       download={fileName}
+  //     >
+  //       Download
+  //     </a>
+  //   </Button>
+  // );
 
   return (
     <Button>
