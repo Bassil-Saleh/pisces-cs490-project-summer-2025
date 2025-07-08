@@ -176,8 +176,11 @@ export default function TrackApplicationsPage() {
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       {job.jobTitle}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                       {job.companyName}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {`Submitted on: ${submissionDate(job.dateSubmitted)}`}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                       {job.jobDescription.substring(0,200)}...
@@ -218,12 +221,12 @@ export default function TrackApplicationsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedResume.name}
                   </p>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {/* <h3 className="font-semibold text-gray-900 dark:text-white">
                     Date Submitted:
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {submissionDate(selectedJob.dateSubmitted)}
-                  </p>
+                  </p> */}
                 </div>
               )}
             </div>
