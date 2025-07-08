@@ -5,12 +5,15 @@ import {
   Briefcase,
   AlertCircle,
   FileText,
-  Eye } from "lucide-react";
+  Eye,
+  Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
+import { User } from "firebase/auth";
 
 type UsedResume = {
   name: string;
@@ -28,7 +31,26 @@ type JobApp = {
   applied: boolean;
 };
 
+type DownloadResumeButtonProps = {
+  fileName: string;
+  user: User | null;
+}
 
+function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
+  async function handleDownload() {
+    if (!user) return;
+  }
+
+  return (
+    <Button
+      onClick={handleDownload}
+      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+    >
+      <Download className="h-4 w-4" />
+      Download
+    </Button>
+  );
+}
 
 export default function TrackApplicationsPage() {
   const { user, loading } = useAuth();
@@ -214,19 +236,22 @@ export default function TrackApplicationsPage() {
               )}
               {/* Selected a job */}
               {selectedJob && selectedResume && (
-                <div className="p-4 border rounded-lg cursor-pointer transition-all advice-job-card">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    File Name:
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedResume.name}
-                  </p>
-                  {/* <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Date Submitted:
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {submissionDate(selectedJob.dateSubmitted)}
-                  </p> */}
+                <div>
+                  <div className="p-4 border rounded-lg cursor-pointer transition-all advice-job-card">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      File Name:
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedResume.name}
+                    </p>
+                    {/* <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Date Submitted:
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {submissionDate(selectedJob.dateSubmitted)}
+                    </p> */}
+                  </div>
+                  <DownloadResumeButton fileName={selectedResume.name} user={user} />
                 </div>
               )}
             </div>
