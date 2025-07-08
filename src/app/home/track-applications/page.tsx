@@ -4,7 +4,8 @@ import {
   Star, 
   Briefcase,
   AlertCircle,
-  FileText } from "lucide-react";
+  FileText,
+  Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
@@ -49,6 +50,16 @@ export default function TrackApplicationsPage() {
       router.push("/");
     }
   }, [user, loading, router]);
+
+  // function handleJobClick(job: JobApp) {
+  //   if (!user) return;
+  //   try {
+  //     ;
+  //   } catch (error) {
+  //     console.log(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
+  //     setError(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
+  //   }
+  // }
 
   async function fetchJobApps() {
     if (!user) return;
@@ -157,6 +168,20 @@ export default function TrackApplicationsPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Resume Used
               </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-3">
+              {/* No job selected */}
+              {!selectedJob && (
+                <div className="text-center py-8">
+                  <Eye className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Select a job you've applied to, then you'll see info about the resume you used to apply for it.
+                  </p>
+                </div>
+              )}
+              {/* Selected a job */}
             </div>
           </div>
         </div>
