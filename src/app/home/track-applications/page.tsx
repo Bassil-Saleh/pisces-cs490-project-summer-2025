@@ -31,23 +31,56 @@ type JobApp = {
   applied: boolean;
 };
 
+async function fetchBlobProxy(userID: string, fileName: string) {
+  try {
+    const response = await fetch(`/api/blob-proxy?userID=${encodeURIComponent(userID)}&file=${encodeURIComponent(fileName)}`);
+    if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status}`);
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error("Error getting download URL for used resume: ", error);
+    return "#";
+  }
+}
+
 type DownloadResumeButtonProps = {
   fileName: string;
   user: User | null;
 }
 
 function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
-  async function handleDownload() {
-    if (!user) return;
-  }
+  const [fileURL, setFileURL] = useState<string | null>(null);
 
-  return (
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const url = await fetchBlobProxy(user.uid, fileName);
+        if (mounted) setFileURL(url);
+      } catch (error) {
+        if (mounted) console.error("Error setting download URL: ", error);
+      }
+    })();
+    return () => {
+      mounted = false;
+      if (fileURL) URL.revokeObjectURL(fileURL);
+    }
+  }, [user, fileName]);
+
+  if (fileURL) return (
     <Button
-      onClick={handleDownload}
+      disabled={!fileURL}
       className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
     >
       <Download className="h-4 w-4" />
-      Download
+      <a
+        href={fileURL}
+        download={fileName}
+      >
+        Download
+      </a>
     </Button>
   );
 }

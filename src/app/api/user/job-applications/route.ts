@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       }));
       return NextResponse.json(usedResumes, { status: 200 });
   } catch (error) {
-    console.error("Error retrieving used resumes: ", error);
+    console.error("Error retrieving used resume info: ", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
