@@ -1,6 +1,10 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { 
+  Star, 
+  Briefcase,
+  AlertCircle,
+  FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
@@ -29,6 +33,9 @@ export default function TrackApplicationsPage() {
 
   const [usedResumes, setUsedResumes] = useState<UsedResume[]>([]);
   const [jobApps, setJobApps] = useState<JobApp[]>([]);
+  
+  const [selectedJob, setSelectedJob] = useState<JobApp | null>(null);
+
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [loadingApps, setLoadingApps] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +101,65 @@ export default function TrackApplicationsPage() {
         <p className="text-gray-600 dark:text-gray-300">
           Review job ads you've applied to and the resumes you used for them
         </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Job Application Selection */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden advice-card">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 advice-card-header">
+            <div className="flex items-center gap-3">
+              <Briefcase className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Select Job
+              </h2>
+            </div>
+          </div>
+          <div className="p-6">
+            {jobApps.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  No job applications found. Try picking a job ad you've uploaded, generate a resume for it, then click "I applied with this resume".
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {jobApps.map((job, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all advice-job-card ${
+                      selectedJob === job
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 selected"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    }`}
+                    onClick={() => setSelectedJob(job)}
+                  >
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {job.jobTitle}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {job.companyName}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      {job.jobDescription.substring(0,100)}...
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Resume View */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden advice-card">
+          <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 advice-card-header">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Resume Used
+              </h2>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
