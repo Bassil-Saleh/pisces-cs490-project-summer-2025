@@ -31,9 +31,16 @@ type JobApp = {
   applied: boolean;
 };
 
-async function fetchBlobProxy(userID: string, fileName: string) {
+async function fetchBlobProxy(userID: string, fileName: string, user: User) {
   try {
-    const response = await fetch(`/api/blob-proxy?userID=${encodeURIComponent(userID)}&file=${encodeURIComponent(fileName)}`);
+    if (!user) throw new Error("User not authenticated");
+
+    const token = await user.getIdToken(); // Get Firebase ID token
+
+    const response = await fetch(
+      `/api/blob-proxy?userID=${encodeURIComponent(userID)}&file=${encodeURIComponent(fileName)}`,
+      { headers: { Authorization: `Bearer ${token}`} });
+    
     if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status}`);
 
     const blob = await response.blob();
@@ -60,7 +67,7 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
     setError(null);
     (async () => {
       try {
-        const url = await fetchBlobProxy(user.uid, fileName);
+        const url = await fetchBlobProxy(user.uid, fileName, user);
         if (url === null) throw new Error("Unable to download file");
         if (mounted) setFileURL(url);
       } catch (error) {
