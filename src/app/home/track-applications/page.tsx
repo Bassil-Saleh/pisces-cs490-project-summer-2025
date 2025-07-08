@@ -55,6 +55,7 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
   useEffect(() => {
     if (!user) return;
     let mounted = true;
+    setFileURL(null);
     (async () => {
       try {
         const url = await fetchBlobProxy(user.uid, fileName);
@@ -72,7 +73,7 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
   if (fileURL) return (
     <Button
       disabled={!fileURL}
-      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
     >
       <Download className="h-4 w-4" />
       <a
@@ -81,6 +82,13 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
       >
         Download
       </a>
+    </Button>
+  );
+
+  return (
+    <Button>
+      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+      Loading...
     </Button>
   );
 }
