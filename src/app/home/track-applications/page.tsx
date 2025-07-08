@@ -28,6 +28,8 @@ type JobApp = {
   applied: boolean;
 };
 
+
+
 export default function TrackApplicationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -36,6 +38,7 @@ export default function TrackApplicationsPage() {
   const [jobApps, setJobApps] = useState<JobApp[]>([]);
   
   const [selectedJob, setSelectedJob] = useState<JobApp | null>(null);
+  const [selectedResume, setSelectedResume] = useState<UsedResume | null>(null);
 
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [loadingApps, setLoadingApps] = useState(false);
@@ -51,15 +54,40 @@ export default function TrackApplicationsPage() {
     }
   }, [user, loading, router]);
 
-  // function handleJobClick(job: JobApp) {
-  //   if (!user) return;
-  //   try {
-  //     ;
-  //   } catch (error) {
-  //     console.log(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
-  //     setError(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
-  //   }
-  // }
+  function formatDateTime(isoString: string): string {
+    // console.log(isoString);
+    const date = new Date(isoString);
+
+    return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    }).format(date);
+  }
+
+  function submissionDate(dateSubmitted: Timestamp) {
+    const date = formatDateTime(dateSubmitted.toDate().toISOString());
+    return date;
+  }
+
+  function handleJobClick(job: JobApp) {
+    if (!user) return;
+    try {
+      setSelectedJob(job);
+      // Retrieve the resume associated with the job which the user clicked on
+      const resumes = usedResumes.filter((resume) => resume.jobID === job.jobID );
+      if (!resumes) {
+        throw new Error(`For some strange reason, the job application ${job.jobTitle} has no resume associated with it...`);
+      }
+      setSelectedResume(resumes[0]);
+    } catch (error) {
+      console.log(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
+      setError(`Error occured while clicking job: ${(error as Error).message || String(error)}`);
+    }
+  }
 
   async function fetchJobApps() {
     if (!user) return;
@@ -143,7 +171,7 @@ export default function TrackApplicationsPage() {
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 selected"
                         : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
-                    onClick={() => setSelectedJob(job)}
+                    onClick={() => handleJobClick(job)}
                   >
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       {job.jobTitle}
@@ -152,7 +180,7 @@ export default function TrackApplicationsPage() {
                       {job.companyName}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                      {job.jobDescription.substring(0,100)}...
+                      {job.jobDescription.substring(0,200)}...
                     </p>
                   </div>
                 ))}
@@ -182,6 +210,22 @@ export default function TrackApplicationsPage() {
                 </div>
               )}
               {/* Selected a job */}
+              {selectedJob && selectedResume && (
+                <div className="p-4 border rounded-lg cursor-pointer transition-all advice-job-card">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    File Name:
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedResume.name}
+                  </p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Date Submitted:
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {submissionDate(selectedJob.dateSubmitted)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
