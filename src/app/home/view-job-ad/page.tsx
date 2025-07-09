@@ -38,8 +38,6 @@ import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
 type generatedResume = {
-  //jobID: string;
-  //resumeID: string;
   fullName: string;
   contact: {
     phone: string[];
@@ -117,7 +115,6 @@ export default function ViewJobAdsPage() {
 
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
-  // const [newResumeRecord, setNewResumeRecord] = useState<generatedResume | null>(null); // Track what will be stored to the database if the user indicates they applied to a job ad with it
   const [newResumeFile, setNewResumeFile] = useState<Blob | null>(null); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
 
@@ -141,7 +138,6 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(false);
       setGeneratingText(true);
       setNewResume(null); // Clear any previous result
-      // setNewResumeRecord(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
@@ -155,20 +151,6 @@ export default function ViewJobAdsPage() {
           throw new Error("AI returned empty response while generating JSON resume");
         }
         console.log(result);
-
-        // const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
-        // const JSONResume: generatedResume = {
-        //   //jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
-        //   //resumeID: uuidv4(),
-        //   fullName: fullName,
-        //   contact: contact,
-        //   summary: summary,
-        //   workExperience: workExperience,
-        //   education: education,
-        //   skills: skills,
-        // };
-        // console.log(JSONResume);
-        // setNewResumeRecord(JSONResume);
 
         // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
         // The AI also doesn't need to know whether or not the user applied with this resume.
@@ -197,7 +179,6 @@ export default function ViewJobAdsPage() {
       setGeneratingText(false);
       setGeneratingJSON(true);
       setNewResume(null); // Clear any previous result
-      // setNewResumeRecord(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
       const userRef = doc(db, "users", user.uid);
@@ -211,8 +192,6 @@ export default function ViewJobAdsPage() {
         }
         const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
         const newJSONResume: generatedResume = {
-          //jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
-          //resumeID: uuidv4(),
           fullName: fullName,
           contact: contact,
           summary: summary,
@@ -221,7 +200,6 @@ export default function ViewJobAdsPage() {
           skills: skills,
         };
         console.log(newJSONResume);
-        // setNewResumeRecord(newJSONResume);
         const resumeBlob = new Blob([JSON.stringify(newJSONResume, null, 2)], { type: "application/json" });
 
         setNewResume(JSON.stringify(newJSONResume, null, 2));
@@ -296,7 +274,6 @@ export default function ViewJobAdsPage() {
         console.error("Error marking job as applied: ", error);
         setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
       });
-      // await updateDoc(doc(db, "users", user.uid), { generatedResumes: arrayUnion(newResumeRecord) });
       console.log("Resume saved to database.");
 
       setStatus("Job marked as \"applied\"!");
