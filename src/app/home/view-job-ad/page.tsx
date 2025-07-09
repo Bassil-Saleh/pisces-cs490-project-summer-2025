@@ -118,6 +118,10 @@ export default function ViewJobAdsPage() {
   const [newResumeFile, setNewResumeFile] = useState<Blob | null>(null); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
 
+  // We want the user to only be able to view/edit/delete job ads that aren't marked as applied,
+  // and when writing changes to the database, we don't want to affect job ads that were already marked as applied.
+  const visibleJobAds = jobAds.filter((ad) => !ad.applied);
+
   useEffect(() => {
     if (!loading && user) {
       (async () => {
@@ -140,6 +144,7 @@ export default function ViewJobAdsPage() {
       setNewResume(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
@@ -147,9 +152,7 @@ export default function ViewJobAdsPage() {
         const jobAdText = jobAds[idx].jobDescription;
 
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        if (!result) {
-          throw new Error("AI returned empty response while generating JSON resume");
-        }
+        if (!result) throw new Error("AI returned empty response while generating JSON resume");
         console.log(result);
 
         // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
@@ -181,15 +184,16 @@ export default function ViewJobAdsPage() {
       setNewResume(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
+
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        if (!result) {
-          throw new Error("AI returned empty response while generating resume");
-        }
+        if (!result) throw new Error("AI returned empty response while generating resume");
+
         const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
         const newJSONResume: generatedResume = {
           fullName: fullName,
@@ -200,6 +204,7 @@ export default function ViewJobAdsPage() {
           skills: skills,
         };
         console.log(newJSONResume);
+
         const resumeBlob = new Blob([JSON.stringify(newJSONResume, null, 2)], { type: "application/json" });
 
         setNewResume(JSON.stringify(newJSONResume, null, 2));
@@ -217,7 +222,8 @@ export default function ViewJobAdsPage() {
 
   const handleDelete = async (idx: number) => {
     if (!user) return;
-    const newAds = jobAds.filter((_, i) => i !== idx);
+    const selectedAd = visibleJobAds[idx];
+    const newAds = jobAds.filter((ad) => ad.jobID !== selectedAd.jobID);
     await updateDoc(doc(db, "users", user.uid), { jobAds: newAds });
     setSelectedIndex(null);
     setRefresh((r) => !r);
@@ -225,7 +231,7 @@ export default function ViewJobAdsPage() {
 
   const handleEdit = (idx: number) => {
     setEditIndex(idx);
-    setEditData({ ...jobAds[idx] });
+    setEditData({ ...visibleJobAds[idx] });
   };
 
   const handleEditChange = (field: keyof JobAd, value: string) => {
@@ -234,12 +240,17 @@ export default function ViewJobAdsPage() {
 
   const handleSave = async () => {
     if (editIndex === null || !user) return;
+    const selectedAd = visibleJobAds[editIndex];
+    const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    if (fullIndex === -1) return;
+
     const updatedAds = [...jobAds];
     updatedAds[editIndex] = {
       ...updatedAds[editIndex],
       ...editData,
       dateSubmitted: Timestamp.now(),
     };
+
     await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
     setEditIndex(null);
     setRefresh((r) => !r);
@@ -247,41 +258,55 @@ export default function ViewJobAdsPage() {
 
   const handleApply = async () => {
     if (selectedIndex === null || !user || !newResumeFile) return;
+    const selectedAd = visibleJobAds[selectedIndex];
+    const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    if (fullIndex === -1) throw new Error("Job ad not found.");
+
     try {
       setApplying(true);
       // Mark the job ad as applied
       const updatedAds = [...jobAds];
-      updatedAds[selectedIndex].applied = true;
-      updatedAds[selectedIndex].dateSubmitted = Timestamp.now();
+      updatedAds[fullIndex] = {
+        ...updatedAds[fullIndex],
+        applied: true,
+        dateSubmitted: Timestamp.now(),
+      };
 
       // Record the job ad as applied in the database
       await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
       console.log("Job ad marked as 'applied'.");
 
       // Save the generated resume to the database
-      const resumeFilepath = `users/${user.uid}/resumes/${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`;
+      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`;
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
         customMetadata: {
           "resumeID": uuidv4(),
-          "jobID": jobAds[selectedIndex].jobID,
+          "jobID": selectedAd.jobID,
         }
       };
 
-      uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
-        console.log("Resume saved to cloud storage.");
-      }).catch((error) => {
-        console.error("Error marking job as applied: ", error);
-        setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
-      });
+      await uploadBytes(resumeFileRef, newResumeFile, metadata);
+      // uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
+      //   console.log("Resume saved to cloud storage.");
+      // }).catch((error) => {
+      //   console.error("Error marking job as applied: ", error);
+      //   setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
+      // });
       console.log("Resume saved to database.");
 
       setStatus("Job marked as \"applied\"!");
       setTimeout(() => setStatus(null), 3000);
+
+      setSelectedIndex(null);
+      setResumeFormat(null);
+      setNewResume(null);
+      setNewResumeFile(null);
+
       setRefresh((r) => !r);
     } catch (error) {
       console.error("Error marking job as applied: ", error);
-      setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
+      setStatus(`Error marking job as applied: ${(error as Error).message || String(error)}`);
     } finally {
       setApplying(false);
     }
