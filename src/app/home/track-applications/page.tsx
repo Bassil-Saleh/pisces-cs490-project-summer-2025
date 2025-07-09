@@ -255,7 +255,15 @@ export default function TrackApplicationsPage() {
             </div>
           </div>
           <div className="p-6">
-            {jobApps.length === 0 ? (
+            {loadingApps && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                <p className="text-gray-500 dark:text-gray-400 mt-4">
+                  Loading job applications...
+                </p>
+              </div>
+            )}
+            {!loadingApps && jobApps.length === 0 ? (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">
