@@ -314,8 +314,17 @@ export default function TrackApplicationsPage() {
           </div>
           <div className="p-6">
             <div className="space-y-3">
+              {/* Loading resume info */}
+              {loadingResumes && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                  <p className="text-gray-500 dark:text-gray-400 mt-4">
+                    Loading resume info...
+                  </p>
+                </div>
+              )}
               {/* No job selected */}
-              {!selectedJob && (
+              {!loadingResumes && !selectedJob && (
                 <div className="text-center py-8">
                   <Eye className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400">
@@ -324,7 +333,7 @@ export default function TrackApplicationsPage() {
                 </div>
               )}
               {/* Selected a job */}
-              {selectedJob && selectedResume && (
+              {!loadingResumes && selectedJob && selectedResume && (
                 <div>
                   <div className="p-4 border rounded-lg cursor-pointer transition-all advice-job-card">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
