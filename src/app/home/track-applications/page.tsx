@@ -7,7 +7,7 @@ import {
   FileText,
   Eye,
   Download } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
@@ -59,17 +59,25 @@ type DownloadResumeButtonProps = {
 function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
   const [fileURL, setFileURL] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const previousURLRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
+    
     let mounted = true;
     setFileURL(null);
     setError(null);
+
     (async () => {
       try {
         const url = await fetchBlobProxy(user.uid, fileName, user);
-        if (url === null) throw new Error("Unable to download file");
-        if (mounted) setFileURL(url);
+        if (!url) throw new Error("Unable to download file");
+        if (mounted) {
+          // Revoke the old url if it exists
+          if (previousURLRef.current) URL.revokeObjectURL(previousURLRef.current);
+          previousURLRef.current = url;
+          setFileURL(url);
+        }
       } catch (error) {
         if (mounted) {
           console.error("Error setting download URL: ", error);
@@ -77,9 +85,13 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
         }
       }
     })();
+    
     return () => {
       mounted = false;
-      if (fileURL) URL.revokeObjectURL(fileURL);
+      if (previousURLRef.current) {
+        URL.revokeObjectURL(previousURLRef.current);
+        previousURLRef.current = null;
+      }
     }
   }, [user, fileName]);
 
