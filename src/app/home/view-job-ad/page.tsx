@@ -399,6 +399,26 @@ export default function ViewJobAdsPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Choose a job advertisement from the list to view details and generate resumes
               </p>
+              {/* Status Messages after marking resume as applied */}
+              {status && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                  status.includes("Error") 
+                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                    : "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
+                }`}>
+                  {status.includes("Error") ? (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  )}
+                  <span className={status.includes("Error") 
+                    ? "text-red-800 dark:text-red-200" 
+                    : "text-green-800 dark:text-green-200"
+                  }>
+                    {status}
+                  </span>
+                </div>
+              )}
             </div>
           ) : editIndex === selectedIndex ? (
             /* Edit Mode */
