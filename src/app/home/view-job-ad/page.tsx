@@ -336,20 +336,20 @@ export default function ViewJobAdsPage() {
               <div className="flex items-center gap-3">
                 <Eye className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Saved Job Ads ({jobAds.length})
+                  Saved Job Ads ({visibleJobAds.length})
                 </h2>
               </div>
             </div>
             
             <div className="p-4 space-y-2 max-h-96 overflow-y-auto">
-              {jobAds.length === 0 ? (
+              {visibleJobAds.length === 0 ? (
                 <div className="text-center py-8">
                   <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400">No job ads found</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500">Upload a job ad to get started</p>
                 </div>
               ) : (
-                jobAds.map((ad, idx) => (
+                visibleJobAds.map((ad, idx) => (
                   <div
                     key={idx}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
@@ -506,21 +506,21 @@ export default function ViewJobAdsPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Title</label>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].jobTitle}
+                      {visibleJobAds[selectedIndex]?.jobTitle}
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</label>
                     <p className="text-lg text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].companyName}
+                      {visibleJobAds[selectedIndex]?.companyName}
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Uploaded</label>
                     <p className="text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].dateSubmitted?.toDate?.().toLocaleString?.() || ""}
+                      {visibleJobAds[selectedIndex]?.dateSubmitted?.toDate?.().toLocaleString?.() || ""}
                     </p>
                   </div>
                   
@@ -528,7 +528,7 @@ export default function ViewJobAdsPage() {
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Description</label>
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                       <p className="whitespace-pre-line text-gray-900 dark:text-white leading-relaxed">
-                        {jobAds[selectedIndex].jobDescription}
+                        {visibleJobAds[selectedIndex]?.jobDescription}
                       </p>
                     </div>
                   </div>
@@ -617,7 +617,7 @@ export default function ViewJobAdsPage() {
                         <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
                         <DownloadResumeButton 
                           text={newResume} 
-                          fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
+                          fileName={`${visibleJobAds[selectedIndex]?.jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
                         <Button
                           disabled={applying}
