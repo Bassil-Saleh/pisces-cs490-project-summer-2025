@@ -105,7 +105,15 @@ export default function ViewJobAdsPage() {
   const { user, loading } = useAuth();
   const [jobAds, setJobAds] = useState<JobAd[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  // const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  // Since the job ads are being filtered based on whether the user already applied to them, 
+  // any edits to visible job ads should not be used with editIndex,
+  // otherwise bugs will occur whenever the user attemps to edit or delete entries. Some examples:
+  // 1. Overwriting a job marked as "applied"
+  // 2. Instead of overwriting a pre-existing job ad (which the user hasn't applied to yet) with changes, 
+  // an edited version of the job ad gets appended to the array so now there are two instances of the job ad in question.
+  const [editJobID, setEditJobID] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
 
@@ -235,8 +243,11 @@ export default function ViewJobAdsPage() {
   };
 
   const handleEdit = (idx: number) => {
-    setEditIndex(idx);
-    setEditData({ ...visibleJobAds[idx] });
+    const selectedAd = visibleJobAds[idx];
+    setEditJobID(selectedAd.jobID);
+    setEditData({ ...selectedAd });
+    // setEditIndex(idx);
+    // setEditData({ ...visibleJobAds[idx] });
   };
 
   const handleEditChange = (field: keyof JobAd, value: string) => {
@@ -244,21 +255,35 @@ export default function ViewJobAdsPage() {
   };
 
   const handleSave = async () => {
-    if (editIndex === null || !user) return;
-    const selectedAd = visibleJobAds[editIndex];
-    const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    if (!editJobID || !user) return;
+    const fullIndex = jobAds.findIndex((ad) => ad.jobID === editJobID);
     if (fullIndex === -1) return;
 
     const updatedAds = [...jobAds];
-    updatedAds[editIndex] = {
-      ...updatedAds[editIndex],
+    updatedAds[fullIndex] = {
+      ...updatedAds[fullIndex],
       ...editData,
       dateSubmitted: Timestamp.now(),
     };
 
     await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
-    setEditIndex(null);
+    setEditJobID(null);
     setRefresh((r) => !r);
+    // if (editIndex === null || !user) return;
+    // const selectedAd = visibleJobAds[editIndex];
+    // const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    // if (fullIndex === -1) return;
+
+    // const updatedAds = [...jobAds];
+    // updatedAds[editIndex] = {
+    //   ...updatedAds[editIndex],
+    //   ...editData,
+    //   dateSubmitted: Timestamp.now(),
+    // };
+
+    // await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
+    // setEditIndex(null);
+    // setRefresh((r) => !r);
   };
 
   const handleApply = async () => {
@@ -420,7 +445,7 @@ export default function ViewJobAdsPage() {
                 </div>
               )}
             </div>
-          ) : editIndex === selectedIndex ? (
+          ) : (editJobID === visibleJobAds[selectedIndex]?.jobID) ? (
             /* Edit Mode */
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
               <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -482,7 +507,7 @@ export default function ViewJobAdsPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setEditIndex(null)}
+                    onClick={() => setEditJobID(null)}
                     className="flex items-center gap-2"
                   >
                     <X className="h-4 w-4" />
