@@ -85,7 +85,7 @@ function DownloadResumeButton({fileName, user}: DownloadResumeButtonProps) {
         }
       }
     })();
-    
+
     return () => {
       mounted = false;
       if (previousURLRef.current) {
@@ -349,10 +349,10 @@ export default function TrackApplicationsPage() {
                 <div>
                   <div className="p-4 border rounded-lg cursor-pointer transition-all advice-job-card">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      File Name:
+                      Resume ID:
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedResume.name}
+                      {selectedResume.resumeID}
                     </p>
                     {/* <h3 className="font-semibold text-gray-900 dark:text-white">
                       Date Submitted:
