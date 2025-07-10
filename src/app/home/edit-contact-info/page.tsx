@@ -17,7 +17,9 @@ import {
     CheckCircle, 
     AlertCircle,
     Edit3,
-    Contact
+    Contact,
+    ArrowUp,
+    ArrowDown
 } from "lucide-react";
 
 type EmailFormProps = {
@@ -52,6 +54,17 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
     if (error) setError(null);
     event.preventDefault();
     setEmailList((oldEmails) => oldEmails.filter((currEmail, i) => i !== index));
+  }
+
+  function moveEmail(index: number, direction: "up" | "down") {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= emailList.length) return;
+
+    const updatedList = [...emailList];
+    [updatedList[index], updatedList[newIndex]] = [updatedList[newIndex], updatedList[index]];
+    setEmailList(updatedList);
+    setFormChanged(true);
+    setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
   }
 
   function placeboSubmit() {
@@ -133,6 +146,33 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
+
+            {/* Move up/down buttons */}
+            <div className="flex flex-col gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => moveEmail(emailIdx, "up")}
+                disabled={emailIdx === 0}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Move email up"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => moveEmail(emailIdx, "down")}
+                disabled={emailIdx === emailList.length - 1}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Move email down"
+              >
+                <ArrowDown className="w-4 h-4" />
+              </Button>
+            </div>
+
             <Button
               type="button"
               variant="outline"
@@ -143,6 +183,7 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
                 setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
               }}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
+              aria-label="Remove email"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -236,63 +277,74 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
     setPhoneList((oldNums) => oldNums.filter((currNum, i) => i !== index));
   }
 
+  function movePhoneNum(index: number, direction: "up" | "down") {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= phoneList.length) return;
+
+    const updatedList = [...phoneList];
+    [updatedList[index], updatedList[newIndex]] = [updatedList[newIndex], updatedList[index]];
+    setPhoneList(updatedList);
+    setFormChanged(true);
+    setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+  }
+
   function placeboSubmit() {
-        try {
-            setIsSubmitting(true);
-            setStatusMessage("Saved!");
-            setFormChanged(false);
-            setTimeout(() => setStatusMessage(null), 2000);
-        } finally {
-            setIsSubmitting(false);
-        }
+    try {
+        setIsSubmitting(true);
+        setStatusMessage("Saved!");
+        setFormChanged(false);
+        setTimeout(() => setStatusMessage(null), 2000);
+    } finally {
+        setIsSubmitting(false);
     }
+  }
 
-    useEffect(() => {
-      //handles reload and close tab if there are unsaved changes
-      const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-          if (formChanged) {
+  useEffect(() => {
+    //handles reload and close tab if there are unsaved changes
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+        if (formChanged) {
+            event.preventDefault();
+            event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+        }
+    };
+
+    //handles (most) clicks on links within the page if there are unsaved changes
+    const handleClick = (event: MouseEvent) => {
+      if (!formChanged) return;
+
+      const nav = document.querySelector('nav');
+      if (nav && nav.contains(event.target as Node)) {
+        const target = (event.target as HTMLElement).closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+          if (!confirmed) {
               event.preventDefault();
-              event.returnValue = ''; //is deprecated but might be necessary to prompt on Chrome
+              event.stopImmediatePropagation();
           }
-      };
+        }
+      }
 
-      //handles (most) clicks on links within the page if there are unsaved changes
-      const handleClick = (event: MouseEvent) => {
-        if (!formChanged) return;
-
-        const nav = document.querySelector('nav');
-        if (nav && nav.contains(event.target as Node)) {
+      const header = document.querySelector('header');
+      if (header && header.contains(event.target as Node)) {
           const target = (event.target as HTMLElement).closest('a');
           if (target && target instanceof HTMLAnchorElement) {
-            const confirmed = window.confirm('You have unsaved changes. Leave this page?');
-            if (!confirmed) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-            }
+              const confirmed = window.confirm('You have unsaved changes. Leave this page?');
+              if (!confirmed) {
+                  event.preventDefault();
+                  event.stopImmediatePropagation();
               }
           }
+      }
+    };
 
-          const header = document.querySelector('header');
-          if (header && header.contains(event.target as Node)) {
-              const target = (event.target as HTMLElement).closest('a');
-              if (target && target instanceof HTMLAnchorElement) {
-                  const confirmed = window.confirm('You have unsaved changes. Leave this page?');
-                  if (!confirmed) {
-                      event.preventDefault();
-                      event.stopImmediatePropagation();
-                  }
-              }
-          }
-      };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
 
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      document.addEventListener('click', handleClick, true);
-
-      return () => {
-          window.removeEventListener('beforeunload', handleBeforeUnload);
-          document.removeEventListener('click', handleClick, true);
-      };
-    }, [formChanged]);
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        document.removeEventListener('click', handleClick, true);
+    };
+  }, [formChanged]);
 
   return (
     <div className="space-y-4">
@@ -314,6 +366,33 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
+
+            {/* Move up/down buttons */}
+            <div className="flex flex-col gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => movePhoneNum(phoneIdx, "up")}
+                disabled={phoneIdx === 0}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Move phone number up"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => movePhoneNum(phoneIdx, "down")}
+                disabled={phoneIdx === phoneList.length - 1}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Move phone number down"
+              >
+                <ArrowDown className="w-4 h-4" />
+              </Button>
+            </div>
+
             <Button
               type="button"
               variant="outline"
@@ -324,6 +403,7 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
                 setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
               }}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
+              aria-label="Remove phone number"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
