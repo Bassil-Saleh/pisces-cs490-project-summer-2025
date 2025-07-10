@@ -134,6 +134,11 @@ export default function ViewJobAdsPage() {
     }
   }, [user, loading, refresh]);
 
+  function sanitizeFileName(name: string): string {
+    // Remove or replace characters that are invalid in most filesystems
+    return name.replace(/[<>:"/\\|?*]/g, "").trim() || "resume";
+  }
+
   const handleGenerateText = async (idx: number) => {
     if (!user) return;
     if (generatingText || generatingJSON) return; // Concurrency lock
@@ -277,7 +282,7 @@ export default function ViewJobAdsPage() {
       console.log("Job ad marked as 'applied'.");
 
       // Save the generated resume to the database
-      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`;
+      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${resumeFormat === "json" ? "json" : "txt"}`;
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
         customMetadata: {
@@ -617,7 +622,7 @@ export default function ViewJobAdsPage() {
                         <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
                         <DownloadResumeButton 
                           text={newResume} 
-                          fileName={`${visibleJobAds[selectedIndex]?.jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
+                          fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
                         <Button
                           disabled={applying}
