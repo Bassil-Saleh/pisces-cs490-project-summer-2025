@@ -552,7 +552,7 @@ export default function ViewJobAdsPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Description</label>
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="whitespace-pre-line text-gray-900 dark:text-white leading-relaxed">
+                      <p className="whitespace-pre-line overflow-auto max-h-64 text-gray-900 dark:text-white leading-relaxed">
                         {visibleJobAds[selectedIndex]?.jobDescription}
                       </p>
                     </div>
