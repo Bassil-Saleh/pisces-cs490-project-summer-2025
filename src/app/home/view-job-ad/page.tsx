@@ -38,8 +38,6 @@ import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
 type generatedResume = {
-  //jobID: string;
-  //resumeID: string;
   fullName: string;
   contact: {
     phone: string[];
@@ -107,7 +105,15 @@ export default function ViewJobAdsPage() {
   const { user, loading } = useAuth();
   const [jobAds, setJobAds] = useState<JobAd[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  // const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  // Since the job ads are being filtered based on whether the user already applied to them, 
+  // any edits to visible job ads should not be used with editIndex,
+  // otherwise bugs will occur whenever the user attemps to edit or delete entries. Some examples:
+  // 1. Overwriting a job marked as "applied"
+  // 2. Instead of overwriting a pre-existing job ad (which the user hasn't applied to yet) with changes, 
+  // an edited version of the job ad gets appended to the array so now there are two instances of the job ad in question.
+  const [editJobID, setEditJobID] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<JobAd>>({});
   const [refresh, setRefresh] = useState(false);
 
@@ -117,9 +123,12 @@ export default function ViewJobAdsPage() {
 
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
-  // const [newResumeRecord, setNewResumeRecord] = useState<generatedResume | null>(null); // Track what will be stored to the database if the user indicates they applied to a job ad with it
   const [newResumeFile, setNewResumeFile] = useState<Blob | null>(null); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | null>(null);
+
+  // We want the user to only be able to view/edit/delete job ads that aren't marked as applied,
+  // and when writing changes to the database, we don't want to affect job ads that were already marked as applied.
+  const visibleJobAds = jobAds.filter((ad) => !ad.applied);
 
   useEffect(() => {
     if (!loading && user) {
@@ -133,6 +142,11 @@ export default function ViewJobAdsPage() {
     }
   }, [user, loading, refresh]);
 
+  function sanitizeFileName(name: string): string {
+    // Remove or replace characters that are invalid in most filesystems
+    return name.replace(/[<>:"/\\|?*]/g, "").trim() || "resume";
+  }
+
   const handleGenerateText = async (idx: number) => {
     if (!user) return;
     if (generatingText || generatingJSON) return; // Concurrency lock
@@ -141,9 +155,9 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(false);
       setGeneratingText(true);
       setNewResume(null); // Clear any previous result
-      // setNewResumeRecord(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
@@ -151,24 +165,8 @@ export default function ViewJobAdsPage() {
         const jobAdText = jobAds[idx].jobDescription;
 
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        if (!result) {
-          throw new Error("AI returned empty response while generating JSON resume");
-        }
+        if (!result) throw new Error("AI returned empty response while generating JSON resume");
         console.log(result);
-
-        // const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
-        // const JSONResume: generatedResume = {
-        //   //jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
-        //   //resumeID: uuidv4(),
-        //   fullName: fullName,
-        //   contact: contact,
-        //   summary: summary,
-        //   workExperience: workExperience,
-        //   education: education,
-        //   skills: skills,
-        // };
-        // console.log(JSONResume);
-        // setNewResumeRecord(JSONResume);
 
         // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
         // The AI also doesn't need to know whether or not the user applied with this resume.
@@ -197,22 +195,20 @@ export default function ViewJobAdsPage() {
       setGeneratingText(false);
       setGeneratingJSON(true);
       setNewResume(null); // Clear any previous result
-      // setNewResumeRecord(null); // Clear any previous result
       setNewResumeFile(null); // Clear any previous result
       setStatus(null); // Clear any previous status message
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
+
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        if (!result) {
-          throw new Error("AI returned empty response while generating resume");
-        }
+        if (!result) throw new Error("AI returned empty response while generating resume");
+
         const {fullName, contact, summary, workExperience, education, skills} = JSON.parse(result);
         const newJSONResume: generatedResume = {
-          //jobID: jobAds[idx].jobID, // So the resume can be associated with the job ad
-          //resumeID: uuidv4(),
           fullName: fullName,
           contact: contact,
           summary: summary,
@@ -221,7 +217,7 @@ export default function ViewJobAdsPage() {
           skills: skills,
         };
         console.log(newJSONResume);
-        // setNewResumeRecord(newJSONResume);
+
         const resumeBlob = new Blob([JSON.stringify(newJSONResume, null, 2)], { type: "application/json" });
 
         setNewResume(JSON.stringify(newJSONResume, null, 2));
@@ -239,15 +235,19 @@ export default function ViewJobAdsPage() {
 
   const handleDelete = async (idx: number) => {
     if (!user) return;
-    const newAds = jobAds.filter((_, i) => i !== idx);
+    const selectedAd = visibleJobAds[idx];
+    const newAds = jobAds.filter((ad) => ad.jobID !== selectedAd.jobID);
     await updateDoc(doc(db, "users", user.uid), { jobAds: newAds });
     setSelectedIndex(null);
     setRefresh((r) => !r);
   };
 
   const handleEdit = (idx: number) => {
-    setEditIndex(idx);
-    setEditData({ ...jobAds[idx] });
+    const selectedAd = visibleJobAds[idx];
+    setEditJobID(selectedAd.jobID);
+    setEditData({ ...selectedAd });
+    // setEditIndex(idx);
+    // setEditData({ ...visibleJobAds[idx] });
   };
 
   const handleEditChange = (field: keyof JobAd, value: string) => {
@@ -255,56 +255,88 @@ export default function ViewJobAdsPage() {
   };
 
   const handleSave = async () => {
-    if (editIndex === null || !user) return;
+    if (!editJobID || !user) return;
+    const fullIndex = jobAds.findIndex((ad) => ad.jobID === editJobID);
+    if (fullIndex === -1) return;
+
     const updatedAds = [...jobAds];
-    updatedAds[editIndex] = {
-      ...updatedAds[editIndex],
+    updatedAds[fullIndex] = {
+      ...updatedAds[fullIndex],
       ...editData,
       dateSubmitted: Timestamp.now(),
     };
+
     await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
-    setEditIndex(null);
+    setEditJobID(null);
     setRefresh((r) => !r);
+    // if (editIndex === null || !user) return;
+    // const selectedAd = visibleJobAds[editIndex];
+    // const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    // if (fullIndex === -1) return;
+
+    // const updatedAds = [...jobAds];
+    // updatedAds[editIndex] = {
+    //   ...updatedAds[editIndex],
+    //   ...editData,
+    //   dateSubmitted: Timestamp.now(),
+    // };
+
+    // await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
+    // setEditIndex(null);
+    // setRefresh((r) => !r);
   };
 
   const handleApply = async () => {
     if (selectedIndex === null || !user || !newResumeFile) return;
+    const selectedAd = visibleJobAds[selectedIndex];
+    const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
+    if (fullIndex === -1) throw new Error("Job ad not found.");
+
     try {
       setApplying(true);
       // Mark the job ad as applied
       const updatedAds = [...jobAds];
-      updatedAds[selectedIndex].applied = true;
-      updatedAds[selectedIndex].dateSubmitted = Timestamp.now();
+      updatedAds[fullIndex] = {
+        ...updatedAds[fullIndex],
+        applied: true,
+        dateSubmitted: Timestamp.now(),
+      };
 
       // Record the job ad as applied in the database
       await updateDoc(doc(db, "users", user.uid), { jobAds: updatedAds });
       console.log("Job ad marked as 'applied'.");
 
       // Save the generated resume to the database
-      const resumeFilepath = `users/${user.uid}/resumes/${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`;
+      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${resumeFormat === "json" ? "json" : "txt"}`;
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
         customMetadata: {
           "resumeID": uuidv4(),
-          "jobID": jobAds[selectedIndex].jobID,
+          "jobID": selectedAd.jobID,
         }
       };
 
-      uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
-        console.log("Resume saved to cloud storage.");
-      }).catch((error) => {
-        console.error("Error marking job as applied: ", error);
-        setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
-      });
-      // await updateDoc(doc(db, "users", user.uid), { generatedResumes: arrayUnion(newResumeRecord) });
+      await uploadBytes(resumeFileRef, newResumeFile, metadata);
+      // uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
+      //   console.log("Resume saved to cloud storage.");
+      // }).catch((error) => {
+      //   console.error("Error marking job as applied: ", error);
+      //   setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
+      // });
       console.log("Resume saved to database.");
 
       setStatus("Job marked as \"applied\"!");
       setTimeout(() => setStatus(null), 3000);
+
+      setSelectedIndex(null);
+      setResumeFormat(null);
+      setNewResume(null);
+      setNewResumeFile(null);
+
       setRefresh((r) => !r);
     } catch (error) {
       console.error("Error marking job as applied: ", error);
-      setStatus(`Error occurred while recording job application: ${(error as Error).message || String(error)}`);
+      setStatus(`Error marking job as applied: ${(error as Error).message || String(error)}`);
     } finally {
       setApplying(false);
     }
@@ -334,20 +366,20 @@ export default function ViewJobAdsPage() {
               <div className="flex items-center gap-3">
                 <Eye className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Saved Job Ads ({jobAds.length})
+                  Saved Job Ads ({visibleJobAds.length})
                 </h2>
               </div>
             </div>
             
             <div className="p-4 space-y-2 max-h-96 overflow-y-auto">
-              {jobAds.length === 0 ? (
+              {visibleJobAds.length === 0 ? (
                 <div className="text-center py-8">
                   <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400">No job ads found</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500">Upload a job ad to get started</p>
                 </div>
               ) : (
-                jobAds.map((ad, idx) => (
+                visibleJobAds.map((ad, idx) => (
                   <div
                     key={idx}
                     className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
@@ -392,8 +424,28 @@ export default function ViewJobAdsPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Choose a job advertisement from the list to view details and generate resumes
               </p>
+              {/* Status Messages after marking resume as applied */}
+              {status && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                  status.includes("Error") 
+                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                    : "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
+                }`}>
+                  {status.includes("Error") ? (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  )}
+                  <span className={status.includes("Error") 
+                    ? "text-red-800 dark:text-red-200" 
+                    : "text-green-800 dark:text-green-200"
+                  }>
+                    {status}
+                  </span>
+                </div>
+              )}
             </div>
-          ) : editIndex === selectedIndex ? (
+          ) : (editJobID === visibleJobAds[selectedIndex]?.jobID) ? (
             /* Edit Mode */
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
               <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -455,7 +507,7 @@ export default function ViewJobAdsPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setEditIndex(null)}
+                    onClick={() => setEditJobID(null)}
                     className="flex items-center gap-2"
                   >
                     <X className="h-4 w-4" />
@@ -504,29 +556,29 @@ export default function ViewJobAdsPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Title</label>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].jobTitle}
+                      {visibleJobAds[selectedIndex]?.jobTitle}
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</label>
                     <p className="text-lg text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].companyName}
+                      {visibleJobAds[selectedIndex]?.companyName}
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Uploaded</label>
                     <p className="text-gray-900 dark:text-white">
-                      {jobAds[selectedIndex].dateSubmitted?.toDate?.().toLocaleString?.() || ""}
+                      {visibleJobAds[selectedIndex]?.dateSubmitted?.toDate?.().toLocaleString?.() || ""}
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Description</label>
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="whitespace-pre-line text-gray-900 dark:text-white leading-relaxed">
-                        {jobAds[selectedIndex].jobDescription}
+                      <p className="whitespace-pre-line overflow-auto max-h-64 text-gray-900 dark:text-white leading-relaxed">
+                        {visibleJobAds[selectedIndex]?.jobDescription}
                       </p>
                     </div>
                   </div>
@@ -615,7 +667,7 @@ export default function ViewJobAdsPage() {
                         <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
                         <DownloadResumeButton 
                           text={newResume} 
-                          fileName={`${jobAds[selectedIndex].jobTitle}.${resumeFormat === "json" ? "json" : "txt"}`} 
+                          fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
                         <Button
                           disabled={applying}

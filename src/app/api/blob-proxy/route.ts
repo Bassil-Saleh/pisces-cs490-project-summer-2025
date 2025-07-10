@@ -81,25 +81,25 @@ export async function GET(request: NextRequest) {
     const [metadata] = await file.getMetadata();
     const contentType = metadata.contentType || "application/octet-stream";
 
-    const nodeStream = file.createReadStream();
-    const webStream = nodeReadableToWeb(nodeStream);
+    // const nodeStream = file.createReadStream();
+    // const webStream = nodeReadableToWeb(nodeStream);
     
-    return new NextResponse(webStream, {
+    // return new NextResponse(webStream, {
+    //   headers: {
+    //     "Content-Type": contentType,
+    //     "Content-Disposition": `attachment; filename=${fileName}`,
+    //     // "Cache-Control": "private, max-age=3600",
+    //   },
+    // })
+
+    const buffer = await streamToBuffer(file.createReadStream());
+    return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename=${fileName}`,
         // "Cache-Control": "private, max-age=3600",
-      },
-    })
-
-    // const buffer = await streamToBuffer(file.createReadStream());
-    // return new NextResponse(buffer, {
-    //   headers: {
-    //     "Content-Type": contentType,
-    //     "Content-Disposition": `attachment; filename=${fileName}`,
-    //     "Cache-Control": "private, max-age=3600",
-    //   }
-    // });
+      }
+    });
 
   } catch (error) {
     console.error("Error retrieving used resume file: ", error);
