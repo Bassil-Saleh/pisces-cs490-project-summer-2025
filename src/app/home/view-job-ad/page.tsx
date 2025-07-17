@@ -164,7 +164,7 @@ export default function ViewJobAdsPage() {
 
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
-  const [newResumeFile, setNewResumeFile] = useState<Blob | null>(null); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it
+  const [newResumeFile, setNewResumeFile] = useState<Blob>(new Blob()); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it; changed to only Blob (with blank state being "new Blob()" so DownloadPDFResumeButton could accept the file param)
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | "pdf" | null>(null);  
 
   // We want the user to only be able to view/edit/delete job ads that aren't marked as applied,
@@ -198,7 +198,7 @@ export default function ViewJobAdsPage() {
       setGeneratingText(true);
       setTempID(" ");
       setNewResume(null); // Clear any previous result
-      setNewResumeFile(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
       setStatus(null); // Clear any previous status message
 
       const userRef = doc(db, "users", user.uid);
@@ -240,7 +240,7 @@ export default function ViewJobAdsPage() {
       setGeneratingText(false);
       setTempID(" ");
       setNewResume(null); // Clear any previous result
-      setNewResumeFile(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
       setStatus(null); // Clear any previous status message
 
       const userRef = doc(db, "users", user.uid);
@@ -314,7 +314,7 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(true);
       setTempID(" ");
       setNewResume(null); // Clear any previous result
-      setNewResumeFile(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
       setStatus(null); // Clear any previous status message
 
       const userRef = doc(db, "users", user.uid);
@@ -406,7 +406,7 @@ export default function ViewJobAdsPage() {
   };
 
   const handleApply = async () => {
-    if (selectedIndex === null || !user || !newResumeFile) return;
+    if (selectedIndex === null || !user || newResumeFile === new Blob()) return;
     const selectedAd = visibleJobAds[selectedIndex];
     const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
     if (fullIndex === -1) throw new Error("Job ad not found.");
@@ -459,7 +459,7 @@ export default function ViewJobAdsPage() {
       setSelectedIndex(null);
       setResumeFormat(null);
       setNewResume(null);
-      setNewResumeFile(null);
+      setNewResumeFile(new Blob());
 
       setRefresh((r) => !r);
     } catch (error) {
@@ -811,7 +811,7 @@ export default function ViewJobAdsPage() {
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                       <div className="flex items-center gap-2 mb-4">
                         <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
-                        {/*<DownloadPDFResumeButton 
+                        <DownloadPDFResumeButton 
                           file={newResumeFile} 
                           fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.pdf`} 
                         />
@@ -832,10 +832,10 @@ export default function ViewJobAdsPage() {
                             </>
                           )}
                         </Button>
-                        */}
                       </div>
                       <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
                         <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
+                          
                           {/*this is where the preview (templateName, description, image) should go instead of newResume*/ newResume}
                         </pre>
                       </div>
