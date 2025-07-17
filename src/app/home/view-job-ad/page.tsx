@@ -801,10 +801,7 @@ export default function ViewJobAdsPage() {
                                     </Card>
                                     <DialogTrigger asChild>
                                         <Button
-                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                                          onClick={() => {
-                                            setChosenTemplate("oneColV1");
-                                          }}
+                                          onClick={() => { setChosenTemplate("oneColV1")}}
                                         >
                                           Choose me!
                                         </Button>    
@@ -823,10 +820,7 @@ export default function ViewJobAdsPage() {
                                     </Card>
                                     <DialogTrigger asChild>
                                         <Button
-                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                                          onClick={() => {
-                                            setChosenTemplate("oneColV2");
-                                          }}
+                                          onClick={() => { setChosenTemplate("oneColV2")}}
                                         >
                                           Choose me!
                                         </Button>    
@@ -845,10 +839,7 @@ export default function ViewJobAdsPage() {
                                     </Card>
                                     <DialogTrigger asChild>
                                         <Button
-                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                                          onClick={() => {
-                                            setChosenTemplate("twoColV1");
-                                          }}
+                                          onClick={() => { setChosenTemplate("twoColV1")}}
                                         >
                                           Choose me!
                                         </Button>    
@@ -867,10 +858,7 @@ export default function ViewJobAdsPage() {
                                     </Card>
                                     <DialogTrigger asChild>
                                         <Button
-                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                                          onClick={() => {
-                                            setChosenTemplate("twoColV2");
-                                          }}
+                                          onClick={() => { setChosenTemplate("twoColV2")}}
                                         >
                                           Choose me!
                                         </Button>    
@@ -889,10 +877,7 @@ export default function ViewJobAdsPage() {
                                     </Card>
                                     <DialogTrigger asChild>
                                         <Button
-                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                                          onClick={() => {
-                                            setChosenTemplate("twoColV3");
-                                          }}
+                                          onClick={() => { setChosenTemplate("twoColV3")}}
                                         >
                                           Choose me!
                                         </Button>    
