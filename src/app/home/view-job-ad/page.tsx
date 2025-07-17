@@ -468,7 +468,6 @@ export default function ViewJobAdsPage() {
         customMetadata: {
           "resumeID": uuidv4(),
           "jobID": selectedAd.jobID,
-          "templateID": tempID,
         }
       };
 
