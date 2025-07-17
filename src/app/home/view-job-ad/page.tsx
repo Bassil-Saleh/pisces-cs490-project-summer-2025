@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import jsPDF from "jspdf";
 import { 
   getResumeAIResponseJSON, 
   generateResumeAIPromptJSON, 
@@ -80,7 +81,7 @@ type JobAd = {
 };
 
 type DownloadResumeButtonProps = {
-  text: string;
+  text: string | Blob; // accept string or Blob
   fileName: string;
 };
 
@@ -92,7 +93,14 @@ type DownloadPDFResumeButtonProps = {
 //for text resumes
 function DownloadTextResumeButton({text, fileName}: DownloadResumeButtonProps) {
   function handleDownload() {
-    const blob = new Blob([text], { type: "text/plain" });
+    let blob: Blob;
+    if (text instanceof Blob) {
+      blob = text; // it's already a Blob (e.g. PDF)
+    } else {
+      // For text or JSON, create a text blob
+      const type = fileName.endsWith(".json") ? "application/json" : "text/plain";
+      blob = new Blob([text], { type });
+    }
     const url = URL.createObjectURL(blob);
     const textLink = document.createElement("a");
     textLink.href = url;
@@ -164,6 +172,7 @@ export default function ViewJobAdsPage() {
 
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
+
   const [newResumeFile, setNewResumeFile] = useState<Blob>(new Blob()); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it; changed to only Blob (with blank state being "new Blob()" so DownloadPDFResumeButton could accept the file param)
   const [resumeFormat, setResumeFormat] = useState<"text" | "json" | "pdf" | null>(null);  
 
@@ -352,6 +361,50 @@ export default function ViewJobAdsPage() {
     }
   };
 
+  const handleGeneratePDF = async (idx: number) => {
+    if (!user || generatingText || generatingJSON || generatingPDF) return;
+
+    setResumeFormat("pdf");
+    setGeneratingPDF(true); // ✅ Show spinner for PDF generation
+
+    try {
+      setGeneratingText(false);
+      setGeneratingJSON(false);
+      setNewResume(null);
+      setNewResumeFile(null);
+      setStatus(null);
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        if (!result) throw new Error("AI returned empty response while generating resume");
+
+        const finalText = await getResumeAIResponseText(generateResumeAIPromptText, result);
+
+        const doc = new jsPDF();
+        const splitText = doc.splitTextToSize(finalText, 180);
+        doc.text(splitText, 10, 10);
+        const pdfBlob = doc.output("blob");
+
+        setNewResume(finalText);
+        setNewResumeFile(pdfBlob);
+        setStatus("PDF Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (error) {
+      setStatus(`Error occurred while generating PDF resume: ${(error as Error).message || String(error)}`);
+      setNewResume(null);
+    } finally {
+      setGeneratingPDF(false); // ✅ Hide spinner after it's done
+    }
+  };
+
+
   const handleDelete = async (idx: number) => {
     if (!user) return;
     const selectedAd = visibleJobAds[idx];
@@ -437,6 +490,7 @@ export default function ViewJobAdsPage() {
       const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${extension}`;
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
+        contentType, // This ensures correct MIME type is stored
         customMetadata: {
           "resumeID": uuidv4(),
           "jobID": selectedAd.jobID,
@@ -444,6 +498,7 @@ export default function ViewJobAdsPage() {
         }
       };
 
+      const resumeFileRef = ref(storage, resumeFilepath);
       await uploadBytes(resumeFileRef, newResumeFile, metadata);
       // uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
       //   console.log("Resume saved to cloud storage.");
@@ -714,6 +769,22 @@ export default function ViewJobAdsPage() {
               </div>
 
               {/* AI Resume Generation Card */}
+              <div className="flex items-center gap-3">
+                <label htmlFor="format" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Resume Format:
+                </label>
+                <select
+                  id="format"
+                  className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  value={resumeFormat || ""}
+                  onChange={(e) => setResumeFormat(e.target.value as "text" | "json" | "pdf")}
+                >
+                  <option value="">Select Format</option>
+                  <option value="text">Text</option>
+                  <option value="json">JSON</option>
+                  <option value="pdf">PDF</option>
+                </select>
+              </div>
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
                 <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3">
@@ -731,55 +802,33 @@ export default function ViewJobAdsPage() {
                   
                   <div className="flex gap-3">
                     <Button
-                      disabled={generatingText || generatingJSON || generatingPDF}
-                      onClick={() => handleGenerateText(selectedIndex)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                      disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                      onClick={() => {
+                        if (resumeFormat === "text") handleGenerateText(selectedIndex);
+                        else if (resumeFormat === "json") handleGenerateJSON(selectedIndex);
+                        else if (resumeFormat === "pdf") handleGeneratePDF(selectedIndex);
+                      }}
+                      className={`flex items-center gap-2 ${
+                        resumeFormat === "json" || resumeFormat === "pdf"
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      } text-white`}
                     >
-                      {generatingText ? (
+                      {(generatingText || generatingJSON || generatingPDF) ? (
                         <>
                           <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                           Generating...
                         </>
                       ) : (
                         <>
-                          <FileText className="h-4 w-4" />
-                          Generate Text Resume
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button
-                      disabled={generatingJSON || generatingText || generatingPDF}
-                      onClick={() => handleGenerateJSON(selectedIndex)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-                    >
-                      {generatingJSON ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Code className="h-4 w-4" />
-                          Generate JSON Resume
-                        </>
-                      )}
-                    </Button>
-
-                    <Button
-                      disabled={generatingJSON || generatingText || generatingPDF}
-                      onClick={() => handleGeneratePDF(selectedIndex)}
-                      className="bg-pink-500 hover:bg-pink-700 text-white flex items-center gap-2"
-                    >
-                      {generatingPDF ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Code className="h-4 w-4" />
-                          Generate PDF Resume
+                          {resumeFormat === "json" ? (
+                            <Code className="h-4 w-4" />
+                          ) : resumeFormat === "pdf" ? (
+                            <FileText className="h-4 w-4" />
+                          ) : (
+                            <FileText className="h-4 w-4" />
+                          )}
+                          Generate {resumeFormat === "json" ? "JSON" : resumeFormat === "pdf" ? "PDF" : "Text"} Resume
                         </>
                       )}
                     </Button>

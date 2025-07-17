@@ -140,7 +140,7 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
                 onChange={(event) => {
                   handleChange(emailIdx, event.target.value);
                   setFormChanged(true);
-                  setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+                  setStatusMessage("There has been a change. Don't forget to click \"Save Emails\" and then the \"Save All Changes\" button at the bottom!");
                 }}
                 placeholder="Enter your email address"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
@@ -180,7 +180,7 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
               onClick={(event) => {
                 removeEmail(event, emailIdx);
                 setFormChanged(true);
-                setStatusMessage("There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!");
+                setStatusMessage("There has been a change. Don't forget to click \"Save Emails\" and then the \"Save All Changes\" button at the bottom!");
               }}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
               aria-label="Remove email"
@@ -191,7 +191,7 @@ function EmailForm({emailList, setEmailList, submitted, setSubmitted, error, set
         ))}
       </div>
 
-      {statusMessage === "There has been a change. Don't forget to click \"Save Email Address\" and then the \"Save\" button at the bottom!" && (
+      {statusMessage === "There has been a change. Don't forget to click \"Save Emails\" and then the \"Save All Changes\" button at the bottom!" && (
         <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <p className="text-sm text-yellow-800 dark:text-yellow-200">{statusMessage}</p>
@@ -360,7 +360,7 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
                 onChange={(event) => {
                   handleChange(phoneIdx, event.target.value);
                   setFormChanged(true);
-                  setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+                  setStatusMessage("There has been a change. Don't forget to click \"Save Phones\" and then the \"Save All Changes\" button at the bottom!");
                 }}
                 placeholder="123-456-7890"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
@@ -400,7 +400,7 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
               onClick={(event) => {
                 removePhoneNum(event, phoneIdx);
                 setFormChanged(true);
-                setStatusMessage("There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!");
+                setStatusMessage("There has been a change. Don't forget to click \"Save Phones\" and then the \"Save All Changes\" button at the bottom!");
               }}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:text-red-300"
               aria-label="Remove phone number"
@@ -411,7 +411,7 @@ function PhoneNumForm({phoneList, setPhoneList, submitted, setSubmitted, error, 
         ))}
       </div>
 
-      {statusMessage === "There has been a change. Don't forget to click \"Save Phone Number\" and then the \"Save\" button at the bottom!" && (
+      {statusMessage === "There has been a change. Don't forget to click \"Save Phones\" and then the \"Save All Changes\" button at the bottom!" && (
         <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <p className="text-sm text-yellow-800 dark:text-yellow-200">{statusMessage}</p>
