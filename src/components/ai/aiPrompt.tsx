@@ -300,8 +300,8 @@ export async function getLaTeXResumeAIResponseText(prompt: string, JSONText: str
 
     const outcome = await model.generateContent(totalPrompt);
     const resp = outcome.response;
-    const latexDocResult = resp.text().replaceAll("\u00A0", " ");
-
+    const latexDocResult = resp.text().replaceAll("\u00A0", " ").slice(9,-4);
+    
     console.log(latexDocResult);
     return latexDocResult;
   } catch (error) {
@@ -317,7 +317,7 @@ export const oneColV1 = `
 \\usepackage[T1]{fontenc}
 \\usepackage{inter}
 \\usepackage{lipsum}
-\\renewcommand*\familydefault{\sfdefault}
+\\renewcommand*\\familydefault{\\sfdefault}
 
 \\usepackage{geometry}
 \\geometry{
@@ -425,7 +425,7 @@ export const oneColV1 = `
         }
         \\begin{itemize}
             \\vspace{.5em}
-            \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"
+            \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"; if blank, delete this line
             \\\\
             \\item[] \\textbf{Responsibilities:}
             \\begin{enumerate}
@@ -541,11 +541,11 @@ $\\;\\boldsymbol{\\cdot}\\;$
     %each element in workExperience[] goes here, following the below format
     YYYY-MM %workExperience[].startDate replaces this "YYYY-MM"; if blank, replace with "?"
     to YYYY-MM %workExperience[].endDate replaces this "YYYY-MM"; if blank, replace with "?"
-    & \\\\textbf{Job Title %workExperience[].jobTitle replaces "Job Title"; if blank, replace with "n/a"
-    } - \\\\textit{Company %workExperience[].company replaces "Company"; if blank, replace with "n/a"
+    & \\textbf{Job Title %workExperience[].jobTitle replaces "Job Title"; if blank, replace with "n/a"
+    } - \\textit{Company %workExperience[].company replaces "Company"; if blank, replace with "n/a"
     }
     \\newline
-    \\textbf{Job Summary:} \\lipsum[1] %%workExperience[].jobSummary replaces "\\lipsum[1]"
+    \\textbf{Job Summary:} \\lipsum[1] %%workExperience[].jobSummary replaces "\\lipsum[1]"; if blank, replace with "n/a"
     \\vspace{1em}\\newline
     \\textbf{Responsibilities: }
     \\begin{enumerate}
@@ -677,7 +677,7 @@ A 1-2-paragraph summary of your career... %summary replaces "A 1-2-paragraph sum
         }
         \\begin{itemize}
             \\vspace{.5em}
-            \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"
+            \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"; if blank, delete this line
             \\\\
             \\item[] \\textbf{Responsibilities:}
             \\begin{enumerate}
@@ -778,7 +778,7 @@ export const twoColV2 = `
     }
     \\begin{itemize}
         \\rightskip 0pt
-        \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"
+        \\item[] \\textbf{Job Summary:} \\lipsum[1] %workExperience[].jobSummary replaces "\\lipsum[1]"; if blank, replace with "n/a"
         \\vspace{.5em}
         \\item[] \\textbf{Responsibilities:}
         \\begin{enumerate}
@@ -927,7 +927,7 @@ export const twoColV3 = `
           }{}
           \\vspace{-1.3em}
           \\resumeItemListStart
-            \\item \\textbf{Job Summary}: \\lipsum[1-2] %workExperience[].jobSummary replaces "\\lipsum[1-2]"
+            \\item \\textbf{Job Summary}: \\lipsum[1-2] %workExperience[].jobSummary replaces "\\lipsum[1-2]"; if blank, replace with "n/a"
             \\vspace{1em}
             \\item \\textbf{Responsibilities}
                 \\resumeSubHeadingListStart

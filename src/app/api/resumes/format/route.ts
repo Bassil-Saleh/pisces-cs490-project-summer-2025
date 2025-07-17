@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     try {
         //receive text from Gemini
         const body : LatexTemplate = await req.json();
+        //console.log("Received LaTeX:", body.templateText);
 
         //verify info presence
         if (!body.templateID || !body.templateText || !body.userID || !body.templateName) {

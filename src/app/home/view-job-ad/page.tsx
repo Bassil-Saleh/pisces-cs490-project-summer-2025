@@ -39,11 +39,29 @@ import {
   CheckCircle,
   Clock,
   Wand2,
-  Check
+  Check,
 } from "lucide-react";
 import { User } from "firebase/auth";
 import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { 
+  Carousel, 
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
 
 type generatedResume = {
   fullName: string;
@@ -285,6 +303,7 @@ export default function ViewJobAdsPage() {
         
         // POST request to get PDF
         const latexFinalResult = await getLaTeXResumeAIResponseText(generateResumeAIPromptPreambleText, result, thirdParam); //generate LaTeX resume
+        console.log("Generated LaTeX:", latexFinalResult);
         const response = await fetch("/api/resumes/format", {
           method: "POST",
           headers: {"Content-Type": "application/json", },
@@ -300,7 +319,7 @@ export default function ViewJobAdsPage() {
 
         const pdfBlob = await response.blob();
 
-        setNewResume("PDF"); //placeholder so that condition in AI Resume Generation will trigger !== NULL and work
+        setNewResume("PDF is ready for download"); //placeholder so that condition in AI Resume Generation will trigger !== NULL and work
         setNewResumeFile(pdfBlob);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
@@ -360,50 +379,6 @@ export default function ViewJobAdsPage() {
       setGeneratingJSON(false);
     }
   };
-
-  const handleGeneratePDF = async (idx: number) => {
-    if (!user || generatingText || generatingJSON || generatingPDF) return;
-
-    setResumeFormat("pdf");
-    setGeneratingPDF(true); // ✅ Show spinner for PDF generation
-
-    try {
-      setGeneratingText(false);
-      setGeneratingJSON(false);
-      setNewResume(null);
-      setNewResumeFile(null);
-      setStatus(null);
-
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists() && userSnap.data().resumeFields) {
-        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
-        const jobAdText = jobAds[idx].jobDescription;
-
-        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
-        if (!result) throw new Error("AI returned empty response while generating resume");
-
-        const finalText = await getResumeAIResponseText(generateResumeAIPromptText, result);
-
-        const doc = new jsPDF();
-        const splitText = doc.splitTextToSize(finalText, 180);
-        doc.text(splitText, 10, 10);
-        const pdfBlob = doc.output("blob");
-
-        setNewResume(finalText);
-        setNewResumeFile(pdfBlob);
-        setStatus("PDF Resume generated!");
-        setTimeout(() => setStatus(null), 3000);
-      }
-    } catch (error) {
-      setStatus(`Error occurred while generating PDF resume: ${(error as Error).message || String(error)}`);
-      setNewResume(null);
-    } finally {
-      setGeneratingPDF(false); // ✅ Hide spinner after it's done
-    }
-  };
-
 
   const handleDelete = async (idx: number) => {
     if (!user) return;
@@ -490,7 +465,6 @@ export default function ViewJobAdsPage() {
       const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${extension}`;
       const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
-        contentType, // This ensures correct MIME type is stored
         customMetadata: {
           "resumeID": uuidv4(),
           "jobID": selectedAd.jobID,
@@ -498,7 +472,6 @@ export default function ViewJobAdsPage() {
         }
       };
 
-      const resumeFileRef = ref(storage, resumeFilepath);
       await uploadBytes(resumeFileRef, newResumeFile, metadata);
       // uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
       //   console.log("Resume saved to cloud storage.");
@@ -801,6 +774,139 @@ export default function ViewJobAdsPage() {
                   </p>
                   
                   <div className="flex gap-3">
+                    {resumeFormat === "pdf" && (
+                      <Dialog>
+                        <form>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                            >
+                              Choose a Template
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="lg:max-w-fit">
+                            <DialogTitle>Choose a Template: </DialogTitle>
+                            <Carousel className="w-full max-w-xl">
+                              <CarouselContent>
+                                <CarouselItem className="flex justify-center p-4">
+                                  <div className="flex flex-col items-center gap-4 h-full w-full max-w-lg">
+                                    <Card className="flex flex-col w-full h-full shadow-lg rounded-lg overflow-hidden">
+                                      <CardContent className="relative flex aspect-square justify-center max-w-lg w-full">
+                                        <object data="/1Col_Template_v1_output.pdf" className="absolute inset-0 w-full h-full" type="application/pdf">
+                                          <p>Your browser doesn't support PDFs sorry :(</p>
+                                        </object>
+                                        <p className="absolute top-0 left-0 right-0 p-3 bg-secondary text-white text-sm md:text-base text-center z-10 font-semibold rounded">{allTemplates.oneColV1}</p>
+                                      </CardContent>
+                                    </Card>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                                          onClick={() => {
+                                            setChosenTemplate("oneColV1");
+                                          }}
+                                        >
+                                          Choose me!
+                                        </Button>    
+                                    </DialogTrigger>
+                                  </div>
+                                </CarouselItem>
+                                <CarouselItem className="flex justify-center p-4">
+                                  <div className="flex flex-col items-center gap-4 h-full w-full max-w-lg">
+                                    <Card className="flex flex-col w-full h-full shadow-lg rounded-lg overflow-hidden">
+                                      <CardContent className="relative flex aspect-square justify-center max-w-lg w-full">
+                                        <object data="/1Col_Template_v2_output.pdf" className="absolute inset-0 w-full h-full" type="application/pdf">
+                                          <p>Your browser doesn't support PDFs sorry :(</p>
+                                        </object>
+                                        <p className="absolute top-0 left-0 right-0 p-3 bg-secondary text-white text-sm md:text-base text-center z-10 font-semibold rounded">{allTemplates.oneColV2}</p>
+                                      </CardContent>
+                                    </Card>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                                          onClick={() => {
+                                            setChosenTemplate("oneColV2");
+                                          }}
+                                        >
+                                          Choose me!
+                                        </Button>    
+                                    </DialogTrigger>
+                                  </div>
+                                </CarouselItem>
+                                <CarouselItem className="flex justify-center p-4">
+                                  <div className="flex flex-col items-center gap-4 h-full w-full max-w-lg">
+                                    <Card className="flex flex-col w-full h-full shadow-lg rounded-lg overflow-hidden">
+                                      <CardContent className="relative flex aspect-square justify-center max-w-lg w-full">
+                                        <object data="/2Col_Template_v1_output.pdf" className="absolute inset-0 w-full h-full" type="application/pdf">
+                                          <p>Your browser doesn't support PDFs sorry :(</p>
+                                        </object>
+                                        <p className="absolute top-0 left-0 right-0 p-3 bg-secondary text-white text-sm md:text-base text-center z-10 font-semibold rounded">{allTemplates.twoColV1}</p>
+                                      </CardContent>
+                                    </Card>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                                          onClick={() => {
+                                            setChosenTemplate("twoColV1");
+                                          }}
+                                        >
+                                          Choose me!
+                                        </Button>    
+                                    </DialogTrigger>
+                                  </div>
+                                </CarouselItem>
+                                <CarouselItem className="flex justify-center p-4">
+                                  <div className="flex flex-col items-center gap-4 h-full w-full max-w-lg">
+                                    <Card className="flex flex-col w-full h-full shadow-lg rounded-lg overflow-hidden">
+                                      <CardContent className="relative flex aspect-square justify-center max-w-lg w-full">
+                                        <object data="/2Col_Template_v2_output.pdf" className="absolute inset-0 w-full h-full" type="application/pdf">
+                                          <p>Your browser doesn't support PDFs sorry :(</p>
+                                        </object>
+                                        <p className="absolute top-0 left-0 right-0 p-3 bg-secondary text-white text-sm md:text-base text-center z-10 font-semibold rounded">{allTemplates.twoColV2}</p>
+                                      </CardContent>
+                                    </Card>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                                          onClick={() => {
+                                            setChosenTemplate("twoColV2");
+                                          }}
+                                        >
+                                          Choose me!
+                                        </Button>    
+                                    </DialogTrigger>
+                                  </div>
+                                </CarouselItem>
+                                <CarouselItem className="flex justify-center p-4">
+                                  <div className="flex flex-col items-center gap-4 h-full w-full max-w-lg">
+                                    <Card className="flex flex-col w-full h-full shadow-lg rounded-lg overflow-hidden">
+                                      <CardContent className="relative flex aspect-square justify-center max-w-lg w-full">
+                                        <object data="/2Col_Template_v3_output.pdf" className="absolute inset-0 w-full h-full" type="application/pdf">
+                                          <p>Your browser doesn't support PDFs sorry :(</p>
+                                        </object>
+                                        <p className="absolute top-0 left-0 right-0 p-3 bg-secondary text-white text-sm md:text-base text-center z-10 font-semibold rounded">{allTemplates.twoColV3}</p>
+                                      </CardContent>
+                                    </Card>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                          disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
+                                          onClick={() => {
+                                            setChosenTemplate("twoColV3");
+                                          }}
+                                        >
+                                          Choose me!
+                                        </Button>    
+                                    </DialogTrigger>
+                                  </div>
+                                </CarouselItem>
+                              </CarouselContent>
+                              <CarouselPrevious className="absolute left-4 top-1/2 translate-y-1/2"/>
+                              <CarouselNext className="absolute right-4 top-1/2 translate-y-1/2"/>
+                            </Carousel>
+                          </DialogContent>
+                        </form>
+                      </Dialog>
+                    )}
                     <Button
                       disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
                       onClick={() => {
