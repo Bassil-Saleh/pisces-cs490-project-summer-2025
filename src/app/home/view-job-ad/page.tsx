@@ -303,7 +303,6 @@ export default function ViewJobAdsPage() {
         
         // POST request to get PDF
         const latexFinalResult = await getLaTeXResumeAIResponseText(generateResumeAIPromptPreambleText, result, thirdParam); //generate LaTeX resume
-        console.log("Generated LaTeX:", latexFinalResult);
         const response = await fetch("/api/resumes/format", {
           method: "POST",
           headers: {"Content-Type": "application/json", },
