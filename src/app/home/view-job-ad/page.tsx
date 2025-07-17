@@ -127,6 +127,7 @@ export default function ViewJobAdsPage() {
 
   const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
   const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
+  const [generatingPDF, setGeneratingPDF] = useState(false); // Track whether PDF resume is being generated
   const [applying, setApplying] = useState(false); // Track whether job application is being recorded
 
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
@@ -242,9 +243,11 @@ export default function ViewJobAdsPage() {
   };
 
   const handleGeneratePDF = async (idx: number) => {
-    if (!user) return;
-    if (generatingText || generatingJSON) return; // Prevent race conditions
+    if (!user || generatingText || generatingJSON || generatingPDF) return;
+
     setResumeFormat("pdf");
+    setGeneratingPDF(true); // ✅ Show spinner for PDF generation
+
     try {
       setGeneratingText(false);
       setGeneratingJSON(false);
@@ -254,23 +257,22 @@ export default function ViewJobAdsPage() {
 
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
+
       if (userSnap.exists() && userSnap.data().resumeFields) {
         const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
         const jobAdText = jobAds[idx].jobDescription;
 
-        // You can choose to generate plain text or JSON first, here I use the text for PDF
         const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
         if (!result) throw new Error("AI returned empty response while generating resume");
 
         const finalText = await getResumeAIResponseText(generateResumeAIPromptText, result);
 
-        // Create a PDF from the finalText
         const doc = new jsPDF();
-        const splitText = doc.splitTextToSize(finalText, 180); // Wrap lines to page width
+        const splitText = doc.splitTextToSize(finalText, 180);
         doc.text(splitText, 10, 10);
         const pdfBlob = doc.output("blob");
 
-        setNewResume(finalText); // show the text preview if you want
+        setNewResume(finalText);
         setNewResumeFile(pdfBlob);
         setStatus("PDF Resume generated!");
         setTimeout(() => setStatus(null), 3000);
@@ -278,6 +280,8 @@ export default function ViewJobAdsPage() {
     } catch (error) {
       setStatus(`Error occurred while generating PDF resume: ${(error as Error).message || String(error)}`);
       setNewResume(null);
+    } finally {
+      setGeneratingPDF(false); // ✅ Hide spinner after it's done
     }
   };
 
@@ -668,26 +672,32 @@ export default function ViewJobAdsPage() {
                   
                   <div className="flex gap-3">
                     <Button
-                      disabled={generatingText || generatingJSON || !resumeFormat}
+                      disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
                       onClick={() => {
                         if (resumeFormat === "text") handleGenerateText(selectedIndex);
                         else if (resumeFormat === "json") handleGenerateJSON(selectedIndex);
                         else if (resumeFormat === "pdf") handleGeneratePDF(selectedIndex);
                       }}
                       className={`flex items-center gap-2 ${
-                        resumeFormat === "json"
+                        resumeFormat === "json" || resumeFormat === "pdf"
                           ? "bg-blue-600 hover:bg-blue-700"
                           : "bg-blue-600 hover:bg-blue-700"
                       } text-white`}
                     >
-                      {(generatingText || generatingJSON) ? (
+                      {(generatingText || generatingJSON || generatingPDF) ? (
                         <>
                           <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                           Generating...
                         </>
                       ) : (
                         <>
-                          {resumeFormat === "json" ? <Code className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                          {resumeFormat === "json" ? (
+                            <Code className="h-4 w-4" />
+                          ) : resumeFormat === "pdf" ? (
+                            <FileText className="h-4 w-4" />
+                          ) : (
+                            <FileText className="h-4 w-4" />
+                          )}
                           Generate {resumeFormat === "json" ? "JSON" : resumeFormat === "pdf" ? "PDF" : "Text"} Resume
                         </>
                       )}
