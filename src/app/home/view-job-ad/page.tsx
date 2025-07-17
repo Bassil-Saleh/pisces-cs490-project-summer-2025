@@ -9,10 +9,17 @@ import jsPDF from "jspdf";
 import { 
   getResumeAIResponseJSON, 
   generateResumeAIPromptJSON, 
-  getResumeAIResponseText, 
-  generateResumeAIPromptText,
+  getPlaintextResumeAIResponseText, 
+  generateResumeAIPromptPreambleText,
+  getLaTeXResumeAIResponseText,
+  allTemplates, //dictionary with all the templates
+  oneColV1, //default template
+  oneColV2, //default template
+  twoColV1, //default template
+  twoColV2, //default template
+  twoColV3, //default template
   generateAIResumeJSONPrompt,
-  generateAIResumeJSON
+  generateAIResumeJSON,
 } from "@/components/ai/aiPrompt";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
@@ -78,7 +85,13 @@ type DownloadResumeButtonProps = {
   fileName: string;
 };
 
-function DownloadResumeButton({ text, fileName }: DownloadResumeButtonProps) {
+type DownloadPDFResumeButtonProps = {
+  file: Blob;
+  fileName: string;
+};
+
+//for text resumes
+function DownloadTextResumeButton({text, fileName}: DownloadResumeButtonProps) {
   function handleDownload() {
     let blob: Blob;
     if (text instanceof Blob) {
@@ -89,12 +102,12 @@ function DownloadResumeButton({ text, fileName }: DownloadResumeButtonProps) {
       blob = new Blob([text], { type });
     }
     const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = url;
-    downloadLink.download = fileName || "resume.txt";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    const textLink = document.createElement("a");
+    textLink.href = url;
+    textLink.download = fileName || "resume.txt";
+    document.body.appendChild(textLink);
+    textLink.click();
+    document.body.removeChild(textLink);
     URL.revokeObjectURL(url);
   }
 
@@ -104,7 +117,31 @@ function DownloadResumeButton({ text, fileName }: DownloadResumeButtonProps) {
       className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
     >
       <Download className="h-4 w-4" />
-      Download Resume
+      Download Text Resume
+    </Button>
+  );
+}
+
+//for pdf resumes
+function DownloadPDFResumeButton({file, fileName}: DownloadPDFResumeButtonProps) {
+  function handleDownload() {
+    const url = URL.createObjectURL(file);
+    const pdfLink = document.createElement("a");
+    pdfLink.href = url;
+    pdfLink.download = fileName || "resume.pdf";
+    document.body.appendChild(pdfLink);
+    pdfLink.click();
+    document.body.removeChild(pdfLink);
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <Button
+      onClick={handleDownload}
+      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+    >
+      <Download className="h-4 w-4" />
+      Download PDF Resume
     </Button>
   );
 }
@@ -130,10 +167,14 @@ export default function ViewJobAdsPage() {
   const [generatingPDF, setGeneratingPDF] = useState(false); // Track whether PDF resume is being generated
   const [applying, setApplying] = useState(false); // Track whether job application is being recorded
 
+  const [chosenTemplate, setChosenTemplate] = useState<string>("oneColV1") // Determines which template is being used; oneColV1, oneColV2, twoColV1, twoColV2, twoColV3
+  const [tempID, setTempID] = useState<string>(" "); // Set the TemplateID
+
   const [status, setStatus] = useState<string | null>(null); // Track status message related to resume generation
   const [newResume, setNewResume] = useState<string | null>(null); // Track what is displayed to the user
-  const [newResumeFile, setNewResumeFile] = useState<Blob | null>(null); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it
-  const [resumeFormat, setResumeFormat] = useState<"text" | "json" | "pdf" | null>(null);
+
+  const [newResumeFile, setNewResumeFile] = useState<Blob>(new Blob()); // Tracks the resume file saved to cloud storage if the user indicates they applied to a job with it; changed to only Blob (with blank state being "new Blob()" so DownloadPDFResumeButton could accept the file param)
+  const [resumeFormat, setResumeFormat] = useState<"text" | "json" | "pdf" | null>(null);  
 
   // We want the user to only be able to view/edit/delete job ads that aren't marked as applied,
   // and when writing changes to the database, we don't want to affect job ads that were already marked as applied.
@@ -158,13 +199,15 @@ export default function ViewJobAdsPage() {
 
   const handleGenerateText = async (idx: number) => {
     if (!user) return;
-    if (generatingText || generatingJSON) return; // Concurrency lock
+    if (generatingText || generatingJSON || generatingPDF) return; // Concurrency lock
     setResumeFormat("text");
     try {
       setGeneratingJSON(false);
+      setGeneratingPDF(false);
       setGeneratingText(true);
+      setTempID(" ");
       setNewResume(null); // Clear any previous result
-      setNewResumeFile(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
       setStatus(null); // Clear any previous status message
 
       const userRef = doc(db, "users", user.uid);
@@ -179,12 +222,12 @@ export default function ViewJobAdsPage() {
 
         // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
         // The AI also doesn't need to know whether or not the user applied with this resume.
-        const finalResult = await getResumeAIResponseText(generateResumeAIPromptText, result);
+        const textFinalResult = await getPlaintextResumeAIResponseText(generateResumeAIPromptPreambleText, result); // generate text resume
 
-        const resumeBlob = new Blob([finalResult], { type: "text/plain" });
+        const textBlob = new Blob([textFinalResult], { type: "text/plain" });
 
-        setNewResume(finalResult);
-        setNewResumeFile(resumeBlob);
+        setNewResume(textFinalResult);
+        setNewResumeFile(textBlob);
         setStatus("Resume generated!");
         setTimeout(() => setStatus(null), 3000);
       }
@@ -196,15 +239,91 @@ export default function ViewJobAdsPage() {
     }
   };
 
+  const handleGeneratePDF = async (idx: number) => {
+    if (!user) return;
+    if (generatingText || generatingJSON || generatingPDF) return; // Concurrency lock
+    setResumeFormat("pdf");
+    try {
+      setGeneratingJSON(false);
+      setGeneratingPDF(true);
+      setGeneratingText(false);
+      setTempID(" ");
+      setNewResume(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
+      setStatus(null); // Clear any previous status message
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().resumeFields) {
+        const resumeInfo = JSON.stringify(userSnap.data().resumeFields);
+        const jobAdText = jobAds[idx].jobDescription;
+        setTempID(uuidv4());
+
+        const result = await generateAIResumeJSON(generateAIResumeJSONPrompt, resumeInfo, jobAdText);
+        if (!result) throw new Error("AI returned empty response while generating JSON resume");
+        console.log(result);
+
+        // The AI needs to know the chosen template
+        
+        let thirdParam : string;
+        if (chosenTemplate === "oneColV1") {
+          thirdParam = oneColV1;
+        } else if (chosenTemplate === "oneColV2") {
+          thirdParam = oneColV2;
+        } else if (chosenTemplate === "twoColV1") {
+          thirdParam = twoColV1;
+        } else if (chosenTemplate === "twoColV2") {
+          thirdParam = twoColV2;          
+        } else if (chosenTemplate === "twoColV3") {
+          thirdParam = twoColV3;
+        } else { //default, it can never hit this condition but it is here to prevent error TS2454
+          thirdParam = oneColV1;
+        }
+
+        // The AI doesn't need to know about the jobID or resumeID when generating an unstructured text resume.
+        // The AI also doesn't need to know whether or not the user applied with this resume.
+        
+        // POST request to get PDF
+        const latexFinalResult = await getLaTeXResumeAIResponseText(generateResumeAIPromptPreambleText, result, thirdParam); //generate LaTeX resume
+        const response = await fetch("/api/resumes/format", {
+          method: "POST",
+          headers: {"Content-Type": "application/json", },
+          body: JSON.stringify({
+            templateName: chosenTemplate,
+            templateText: latexFinalResult,
+            userID: user.uid,
+            templateID: tempID,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to generate PDF");
+
+        const pdfBlob = await response.blob();
+
+        setNewResume("PDF"); //placeholder so that condition in AI Resume Generation will trigger !== NULL and work
+        setNewResumeFile(pdfBlob);
+        setStatus("Resume generated!");
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (error) {
+      setStatus(`Error occurred while generating resume: ${(error as Error).message || String(error)}`);
+      setNewResume(null);
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
   const handleGenerateJSON = async (idx: number) => {
     if (!user) return;
-    if (generatingText || generatingJSON) return; // Concurrency lock
+    if (generatingText || generatingJSON || generatingPDF) return; // Concurrency lock
     setResumeFormat("json");
     try {
       setGeneratingText(false);
+      setGeneratingPDF(false);
       setGeneratingJSON(true);
+      setTempID(" ");
       setNewResume(null); // Clear any previous result
-      setNewResumeFile(null); // Clear any previous result
+      setNewResumeFile(new Blob()); // Clear any previous result
       setStatus(null); // Clear any previous status message
 
       const userRef = doc(db, "users", user.uid);
@@ -340,7 +459,7 @@ export default function ViewJobAdsPage() {
   };
 
   const handleApply = async () => {
-    if (selectedIndex === null || !user || !newResumeFile) return;
+    if (selectedIndex === null || !user || newResumeFile === new Blob()) return;
     const selectedAd = visibleJobAds[selectedIndex];
     const fullIndex = jobAds.findIndex((ad) => ad.jobID === selectedAd.jobID);
     if (fullIndex === -1) throw new Error("Job ad not found.");
@@ -360,23 +479,23 @@ export default function ViewJobAdsPage() {
       console.log("Job ad marked as 'applied'.");
 
       // Save the generated resume to the database
-      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${
-        resumeFormat === "json" ? "json" : resumeFormat === "pdf" ? "pdf" : "txt"
-      }`;
-
-      const contentType =
-        resumeFormat === "json"
-          ? "application/json"
-          : resumeFormat === "pdf"
-          ? "application/pdf"
-          : "text/plain";
-
+      let extension : string;
+      if (resumeFormat === "json") {
+        extension = "json";
+      } else if (resumeFormat === "pdf") {
+        extension = "pdf";
+      } else {
+        extension = "txt";
+      }
+      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${extension}`;
+      const resumeFileRef = ref(storage, resumeFilepath);
       const metadata = {
         contentType, // This ensures correct MIME type is stored
         customMetadata: {
-          resumeID: uuidv4(),
-          jobID: selectedAd.jobID,
-        },
+          "resumeID": uuidv4(),
+          "jobID": selectedAd.jobID,
+          "templateID": tempID,
+        }
       };
 
       const resumeFileRef = ref(storage, resumeFilepath);
@@ -395,7 +514,7 @@ export default function ViewJobAdsPage() {
       setSelectedIndex(null);
       setResumeFormat(null);
       setNewResume(null);
-      setNewResumeFile(null);
+      setNewResumeFile(new Blob());
 
       setRefresh((r) => !r);
     } catch (error) {
@@ -737,15 +856,48 @@ export default function ViewJobAdsPage() {
                   )}
 
                   {/* Generated Resume Display */}
-                  {newResume && (
+                  { resumeFormat === "pdf" && newResume && (
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                       <div className="flex items-center gap-2 mb-4">
                         <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
-                        <DownloadResumeButton 
-                          text={newResumeFile ?? ""} // <-- pass Blob or string
-                          fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.${
-                            resumeFormat === "json" ? "json" : resumeFormat === "pdf" ? "pdf" : "txt"
-                          }`} 
+                        <DownloadPDFResumeButton 
+                          file={newResumeFile} 
+                          fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.pdf`} 
+                        />
+                        <Button
+                          disabled={applying}
+                          onClick={handleApply}
+                          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                        >
+                          {applying ? (
+                            <>
+                              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Check />
+                              I applied with this resume
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <div className="bg-white dark:bg-gray-900 p-4 rounded border border-gray-200 dark:border-gray-700 max-h-64 overflow-auto">
+                        <pre className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap font-mono">
+                          
+                          {/*this is where the preview (templateName, description, image) should go instead of newResume*/ newResume}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  { resumeFormat !== "pdf" && newResume && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Generated Resume</h3>
+                        <DownloadTextResumeButton 
+                          text={newResume} 
+                          fileName={`${sanitizeFileName(visibleJobAds[selectedIndex]?.jobTitle || "resume")}.${resumeFormat === "json" ? "json" : "txt"}`} 
                         />
                         <Button
                           disabled={applying}
