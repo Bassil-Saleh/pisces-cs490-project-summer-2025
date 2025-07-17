@@ -5,7 +5,6 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import jsPDF from "jspdf";
 import { 
   getResumeAIResponseJSON, 
   generateResumeAIPromptJSON, 
@@ -99,7 +98,7 @@ type JobAd = {
 };
 
 type DownloadResumeButtonProps = {
-  text: string | Blob; // accept string or Blob
+  text: string;
   fileName: string;
 };
 
@@ -111,14 +110,7 @@ type DownloadPDFResumeButtonProps = {
 //for text resumes
 function DownloadTextResumeButton({text, fileName}: DownloadResumeButtonProps) {
   function handleDownload() {
-    let blob: Blob;
-    if (text instanceof Blob) {
-      blob = text; // it's already a Blob (e.g. PDF)
-    } else {
-      // For text or JSON, create a text blob
-      const type = fileName.endsWith(".json") ? "application/json" : "text/plain";
-      blob = new Blob([text], { type });
-    }
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const textLink = document.createElement("a");
     textLink.href = url;
@@ -128,7 +120,7 @@ function DownloadTextResumeButton({text, fileName}: DownloadResumeButtonProps) {
     document.body.removeChild(textLink);
     URL.revokeObjectURL(url);
   }
-
+  
   return (
     <Button
       onClick={handleDownload}
@@ -182,7 +174,6 @@ export default function ViewJobAdsPage() {
 
   const [generatingText, setGeneratingText] = useState(false); // Track whether plain text resume is being generated
   const [generatingJSON, setGeneratingJSON] = useState(false); // Track whether JSON resume is being generated
-  const [generatingPDF, setGeneratingPDF] = useState(false); // Track whether PDF resume is being generated
   const [applying, setApplying] = useState(false); // Track whether job application is being recorded
 
   const [chosenTemplate, setChosenTemplate] = useState<string>("oneColV1") // Determines which template is being used; oneColV1, oneColV2, twoColV1, twoColV2, twoColV3
@@ -742,22 +733,6 @@ export default function ViewJobAdsPage() {
               </div>
 
               {/* AI Resume Generation Card */}
-              <div className="flex items-center gap-3">
-                <label htmlFor="format" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Resume Format:
-                </label>
-                <select
-                  id="format"
-                  className="border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  value={resumeFormat || ""}
-                  onChange={(e) => setResumeFormat(e.target.value as "text" | "json" | "pdf")}
-                >
-                  <option value="">Select Format</option>
-                  <option value="text">Text</option>
-                  <option value="json">JSON</option>
-                  <option value="pdf">PDF</option>
-                </select>
-              </div>
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
                 <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3">
@@ -893,33 +868,37 @@ export default function ViewJobAdsPage() {
                       </Dialog>
                     )}
                     <Button
-                      disabled={generatingText || generatingJSON || generatingPDF || !resumeFormat}
-                      onClick={() => {
-                        if (resumeFormat === "text") handleGenerateText(selectedIndex);
-                        else if (resumeFormat === "json") handleGenerateJSON(selectedIndex);
-                        else if (resumeFormat === "pdf") handleGeneratePDF(selectedIndex);
-                      }}
-                      className={`flex items-center gap-2 ${
-                        resumeFormat === "json" || resumeFormat === "pdf"
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      } text-white`}
+                      disabled={generatingText || generatingJSON}
+                      onClick={() => handleGenerateText(selectedIndex)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
                     >
-                      {(generatingText || generatingJSON || generatingPDF) ? (
+                      {generatingText ? (
                         <>
                           <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                           Generating...
                         </>
                       ) : (
                         <>
-                          {resumeFormat === "json" ? (
-                            <Code className="h-4 w-4" />
-                          ) : resumeFormat === "pdf" ? (
-                            <FileText className="h-4 w-4" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                          Generate {resumeFormat === "json" ? "JSON" : resumeFormat === "pdf" ? "PDF" : "Text"} Resume
+                          <FileText className="h-4 w-4" />
+                          Generate Text Resume
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      disabled={generatingJSON || generatingText}
+                      onClick={() => handleGenerateJSON(selectedIndex)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                    >
+                      {generatingJSON ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Code className="h-4 w-4" />
+                          Generate JSON Resume
                         </>
                       )}
                     </Button>
