@@ -360,15 +360,26 @@ export default function ViewJobAdsPage() {
       console.log("Job ad marked as 'applied'.");
 
       // Save the generated resume to the database
-      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${resumeFormat === "json" ? "json" : "txt"}`;
-      const resumeFileRef = ref(storage, resumeFilepath);
+      const resumeFilepath = `users/${user.uid}/resumes/${selectedAd.jobID}.${
+        resumeFormat === "json" ? "json" : resumeFormat === "pdf" ? "pdf" : "txt"
+      }`;
+
+      const contentType =
+        resumeFormat === "json"
+          ? "application/json"
+          : resumeFormat === "pdf"
+          ? "application/pdf"
+          : "text/plain";
+
       const metadata = {
+        contentType, // This ensures correct MIME type is stored
         customMetadata: {
-          "resumeID": uuidv4(),
-          "jobID": selectedAd.jobID,
-        }
+          resumeID: uuidv4(),
+          jobID: selectedAd.jobID,
+        },
       };
 
+      const resumeFileRef = ref(storage, resumeFilepath);
       await uploadBytes(resumeFileRef, newResumeFile, metadata);
       // uploadBytes(resumeFileRef, newResumeFile, metadata).then(() => {
       //   console.log("Resume saved to cloud storage.");
